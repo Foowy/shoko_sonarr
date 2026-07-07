@@ -1,0 +1,112 @@
+name: Build & Release ShokoSonarr
+run-name: "${{ github.event_name == 'workflow_dispatch' && format('Manual Build: {0}', github.event.inputs.tag_name) || format('{0}', github.event.release.name || github.event.release.tag_name) }}"
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Tag or branch to build from (e.g. v1.0.0 or master)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Build & attach ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-arm64
+          - os: ubuntu-latest
+            rid: linux-x64
+          - os: windows-latest
+            rid: win-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.tag_name || github.event.release.tag_name }}
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Set Version Variables
+        id: vars
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag_name || github.event.release.tag_name }}"
+
+          # Check if the input/release reference looks like a standard tag (e.g. starts with v)
+          if [[ "$TAG" =~ ^v[0-9] ]]; then
+            echo "is_tag=true" >> $GITHUB_OUTPUT
+            VERSION="${TAG#v}"
+            VERSION_BASE=$(echo "$VERSION" | cut -d'.' -f1-3)
+
+            if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+              IS_PRERELEASE=$(gh release view "$TAG" --repo "${{ github.repository }}" --json isPrerelease -q .isPrerelease)
+            else
+              IS_PRERELEASE="${{ github.event.release.prerelease }}"
+            fi
+
+            if [[ "$IS_PRERELEASE" == "true" ]]; then
+              echo "file_ver=v${VERSION_BASE}-dev" >> $GITHUB_OUTPUT
+            else
+              echo "file_ver=v${VERSION_BASE}" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Fallback for branch-based test builds
+            echo "is_tag=false" >> $GITHUB_OUTPUT
+            echo "file_ver=$TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish
+        run: dotnet publish ShokoSonarr/ShokoSonarr.csproj -c Release -r ${{ matrix.rid }} --no-self-contained -o publish
+        env:
+          DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+
+      - name: Package ZIP (Linux)
+        if: runner.os == 'Linux'
+        id: pkg_linux
+        shell: bash
+        run: |
+          ZIP_NAME="ShokoSonarr-${{ steps.vars.outputs.file_ver }}_${{ matrix.rid }}.zip"
+          cd publish
+          zip -r "../$ZIP_NAME" .
+          echo "zip_path=$ZIP_NAME" >> $GITHUB_OUTPUT
+
+      - name: Package ZIP (Windows)
+        if: runner.os == 'Windows'
+        id: pkg_win
+        shell: pwsh
+        run: |
+          $ZipName = "ShokoSonarr-${{ steps.vars.outputs.file_ver }}_${{ matrix.rid }}.zip"
+          Compress-Archive -Path publish\* -DestinationPath "$env:GITHUB_WORKSPACE\$ZipName" -Force
+          echo "zip_path=$ZipName" >> $env:GITHUB_OUTPUT
+
+      - name: Upload asset to GitHub Release
+        if: steps.vars.outputs.is_tag == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.inputs.tag_name || github.event.release.tag_name }}
+          ZIP_PATH: ${{ runner.os == 'Windows' && steps.pkg_win.outputs.zip_path || steps.pkg_linux.outputs.zip_path }}
+        run: |
+          gh release upload "$TAG" "$ZIP_PATH" --clobber
+
+      - name: Upload Artifacts
+        if: steps.vars.outputs.is_tag == 'false'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ShokoSonarr-${{ steps.vars.outputs.file_ver }}-${{ matrix.rid }}
+          path: ${{ runner.os == 'Windows' && steps.pkg_win.outputs.zip_path || steps.pkg_linux.outputs.zip_path }}

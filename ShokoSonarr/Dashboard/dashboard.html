@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Shoko Sonarr — Missing Episodes</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <header>
+    <h1>Missing Episodes</h1>
+    <div class="actions">
+      <button id="scan-now">Scan Now</button>
+      <button id="open-settings">Settings</button>
+    </div>
+  </header>
+
+  <section id="settings-panel" class="panel hidden">
+    <h2>Sonarr Settings</h2>
+    <label>Base URL <input id="settings-url" type="text" placeholder="http://192.168.1.40:8989" /></label>
+    <label>API Key <input id="settings-key" type="password" /></label>
+    <label>Scan Interval (hours) <input id="settings-interval" type="number" min="0" /></label>
+    <label>Quality Profile <select id="settings-quality-profile"></select></label>
+    <label>Root Folder <select id="settings-root-folder"></select></label>
+    <div class="actions">
+      <button id="test-connection">Test Connection</button>
+      <button id="save-settings">Save</button>
+    </div>
+    <p id="settings-status"></p>
+  </section>
+
+  <section id="series-list"></section>
+
+  <script src="dashboard.js"></script>
+</body>
+</html>

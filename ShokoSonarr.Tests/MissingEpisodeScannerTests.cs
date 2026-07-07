@@ -1,0 +1,107 @@
+using Moq;
+using Shoko.Abstractions.Metadata;
+using Shoko.Abstractions.Metadata.Enums;
+using Shoko.Abstractions.Metadata.Services;
+using Shoko.Abstractions.Metadata.Shoko;
+using Shoko.Abstractions.Video;
+using ShokoSonarr.Services;
+using Xunit;
+
+namespace ShokoSonarr.Tests;
+
+public class MissingEpisodeScannerTests
+{
+    private static Mock<IShokoEpisode> MakeEpisode(int anidbId, int number, EpisodeType type, bool hidden, int videoCount)
+    {
+        var ep = new Mock<IShokoEpisode>();
+        ep.Setup(e => e.AnidbEpisodeID).Returns(anidbId);
+        ep.Setup(e => e.EpisodeNumber).Returns(number);
+        ep.Setup(e => e.Type).Returns(type);
+        ep.Setup(e => e.IsHidden).Returns(hidden);
+        ep.Setup(e => e.VideoList).Returns(videoCount == 0 ? [] : [Mock.Of<IVideo>()]);
+        ep.Setup(e => e.AirDate).Returns((DateOnly?)null);
+        return ep;
+    }
+
+    [Fact]
+    public void Scan_SeriesWithOneMissingNormalEpisode_ReturnsThatEpisode()
+    {
+        var missingEp = MakeEpisode(anidbId: 1001, number: 5, type: EpisodeType.Episode, hidden: false, videoCount: 0);
+        var ownedEp = MakeEpisode(anidbId: 1000, number: 4, type: EpisodeType.Episode, hidden: false, videoCount: 1);
+
+        var series = new Mock<IShokoSeries>();
+        series.Setup(s => s.ID).Returns(42);
+        series.Setup(s => s.Episodes).Returns([ownedEp.Object, missingEp.Object]);
+        series.Setup(s => s.LocalEpisodeCounts).Returns(new EpisodeCounts { Episodes = 1 });
+
+        var metadataService = new Mock<IMetadataService>();
+        metadataService.Setup(m => m.GetAllShokoSeries()).Returns([series.Object]);
+
+        var scanner = new MissingEpisodeScanner(metadataService.Object);
+        var snapshot = scanner.Scan();
+
+        Assert.Single(snapshot.Series);
+        Assert.Single(snapshot.Series[0].MissingEpisodes);
+        Assert.Equal(5, snapshot.Series[0].MissingEpisodes[0].EpisodeNumber);
+        Assert.Equal(1001, snapshot.Series[0].MissingEpisodes[0].AnidbEpisodeId);
+    }
+
+    [Fact]
+    public void Scan_SeriesWithNoFilesAtAll_IsExcluded()
+    {
+        var unownedEp = MakeEpisode(anidbId: 2001, number: 1, type: EpisodeType.Episode, hidden: false, videoCount: 0);
+
+        var series = new Mock<IShokoSeries>();
+        series.Setup(s => s.ID).Returns(99);
+        series.Setup(s => s.Episodes).Returns([unownedEp.Object]);
+        series.Setup(s => s.LocalEpisodeCounts).Returns(new EpisodeCounts { Episodes = 0 });
+
+        var metadataService = new Mock<IMetadataService>();
+        metadataService.Setup(m => m.GetAllShokoSeries()).Returns([series.Object]);
+
+        var scanner = new MissingEpisodeScanner(metadataService.Object);
+        var snapshot = scanner.Scan();
+
+        Assert.Empty(snapshot.Series);
+    }
+
+    [Fact]
+    public void Scan_HiddenMissingEpisode_IsExcluded()
+    {
+        var hiddenEp = MakeEpisode(anidbId: 3001, number: 6, type: EpisodeType.Episode, hidden: true, videoCount: 0);
+        var ownedEp = MakeEpisode(anidbId: 3000, number: 5, type: EpisodeType.Episode, hidden: false, videoCount: 1);
+
+        var series = new Mock<IShokoSeries>();
+        series.Setup(s => s.ID).Returns(7);
+        series.Setup(s => s.Episodes).Returns([ownedEp.Object, hiddenEp.Object]);
+        series.Setup(s => s.LocalEpisodeCounts).Returns(new EpisodeCounts { Episodes = 1 });
+
+        var metadataService = new Mock<IMetadataService>();
+        metadataService.Setup(m => m.GetAllShokoSeries()).Returns([series.Object]);
+
+        var scanner = new MissingEpisodeScanner(metadataService.Object);
+        var snapshot = scanner.Scan();
+
+        Assert.Empty(snapshot.Series);
+    }
+
+    [Fact]
+    public void Scan_CreditsTypeEpisodeMissing_IsExcluded()
+    {
+        var creditsEp = MakeEpisode(anidbId: 4001, number: 1, type: EpisodeType.Credits, hidden: false, videoCount: 0);
+        var ownedEp = MakeEpisode(anidbId: 4000, number: 1, type: EpisodeType.Episode, hidden: false, videoCount: 1);
+
+        var series = new Mock<IShokoSeries>();
+        series.Setup(s => s.ID).Returns(8);
+        series.Setup(s => s.Episodes).Returns([ownedEp.Object, creditsEp.Object]);
+        series.Setup(s => s.LocalEpisodeCounts).Returns(new EpisodeCounts { Episodes = 1 });
+
+        var metadataService = new Mock<IMetadataService>();
+        metadataService.Setup(m => m.GetAllShokoSeries()).Returns([series.Object]);
+
+        var scanner = new MissingEpisodeScanner(metadataService.Object);
+        var snapshot = scanner.Scan();
+
+        Assert.Empty(snapshot.Series);
+    }
+}

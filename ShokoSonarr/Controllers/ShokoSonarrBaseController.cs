@@ -1,0 +1,16 @@
+using Microsoft.AspNetCore.Mvc;
+
+namespace ShokoSonarr.Controllers;
+
+/// <summary>Shared route/versioning setup and response envelope for all ShokoSonarr API controllers.</summary>
+[ApiController]
+[ApiVersion(ShokoSonarrConstants.ApiVersion)]
+[Route("/api/v{version:apiVersion}/ShokoSonarr/[controller]")]
+public abstract class ShokoSonarrBaseController : ControllerBase
+{
+    /// <summary>Standard response envelope for ShokoSonarr API endpoints.</summary>
+    /// <param name="Success">Whether the operation succeeded.</param>
+    /// <param name="Message">An optional error or status message.</param>
+    /// <param name="Data">The result payload.</param>
+    public record ApiResponse<T>(bool Success, string? Message, T? Data);
+}

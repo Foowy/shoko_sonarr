@@ -1,0 +1,13 @@
+body { font-family: sans-serif; margin: 0; padding: 1rem; background: #1e1e1e; color: #eee; }
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.actions button { margin-left: 0.5rem; padding: 0.4rem 0.8rem; cursor: pointer; }
+.panel { background: #2a2a2a; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+.panel.hidden { display: none; }
+.panel label { display: block; margin-bottom: 0.5rem; }
+.series-card { background: #2a2a2a; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
+.series-card .header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.series-card .badge { background: #c0392b; padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.85rem; }
+.series-card .episodes { display: none; margin-top: 0.5rem; }
+.series-card.expanded .episodes { display: block; }
+.series-card.no-match { opacity: 0.6; }
+.episode-row { display: flex; justify-content: space-between; padding: 0.2rem 0; }

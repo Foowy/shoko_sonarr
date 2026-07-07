@@ -1,0 +1,9 @@
+# claude-tweaks: transient artifacts
+screenshots/
+.worktrees/
+stories/auth.yml
+.claude-tweaks/
+
+# .NET build artifacts
+bin/
+obj/
