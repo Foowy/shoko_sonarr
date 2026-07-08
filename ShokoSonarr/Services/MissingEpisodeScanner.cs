@@ -71,7 +71,8 @@ public class MissingEpisodeScanner(IMetadataService metadataService, ScanCacheSt
         };
     }
 
-    /// <summary>For each pending search whose episode is no longer in the fresh missing-episode results, tells Sonarr to unmonitor it and clears the pending entry. A failed Sonarr call is logged and left pending for the next scan — it must never fail the scan itself.</summary>
+    /// <summary>For each pending search whose episode is no longer in the fresh missing-episode results, tells Sonarr to unmonitor it and clears the pending entry. A failed Sonarr call is logged and left pending for the next scan — it must never fail the scan itself.
+    /// "No longer in the results" covers two cases treated identically: the episode was actually imported by Shoko, or it fell out of scan scope (e.g. a specials-exclude override was set after the search was triggered). Both mean the plugin should stop tracking it and tell Sonarr to stop chasing it.</summary>
     private async Task ReconcilePendingSearchesAsync(List<PendingSearch> pending, List<SeriesMissingResult> freshResults)
     {
         if (pending.Count == 0)
