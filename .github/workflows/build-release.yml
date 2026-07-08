@@ -110,3 +110,82 @@ jobs:
         with:
           name: ShokoSonarr-${{ steps.vars.outputs.file_ver }}-${{ matrix.rid }}
           path: ${{ runner.os == 'Windows' && steps.pkg_win.outputs.zip_path || steps.pkg_linux.outputs.zip_path }}
+
+  update-manifest:
+    name: Update plugin manifest
+    needs: [publish]
+    # Run if triggered by release (published) or tag dispatch.
+    if: startsWith(github.event.inputs.tag_name, 'v') || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Update Manifest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.event.inputs.tag_name || github.event.release.tag_name }}"
+          VERSION="${TAG#v}"
+          SOURCE_REVISION=$(git rev-list -n 1 "$TAG")
+
+          # Extract Shoko.Abstractions version dynamically from csproj
+          ABSTRACTION_VERSION=$(grep -oP 'PackageReference Include="Shoko\.Abstractions" Version="\K[^"]+' ShokoSonarr/ShokoSonarr.csproj | head -1)
+          if [ -z "$ABSTRACTION_VERSION" ]; then
+            echo "Error: Missing Shoko.Abstractions version in ShokoSonarr.csproj"
+            exit 1
+          fi
+          ABSTRACTION_VERSION=$(echo "$ABSTRACTION_VERSION" | cut -d'-' -f1) # Strip the pre-release suffix for manifest compatibility (Remove if pre-release versions are supported in the future)
+
+          # Fetch release metadata from API (including the body for release_notes)
+          RELEASE_DATA=$(gh release view "$TAG" --repo "${{ github.repository }}" --json publishedAt,isPrerelease,body)
+          RELEASED_AT=$(echo "$RELEASE_DATA" | jq -r .publishedAt)
+          IS_PRERELEASE=$(echo "$RELEASE_DATA" | jq -r .isPrerelease)
+          RELEASE_NOTES=$(echo "$RELEASE_DATA" | jq -r .body)
+          CHANNEL=$([[ "$IS_PRERELEASE" == "true" ]] && echo "Dev" || echo "Stable")
+
+          # Download all release assets
+          gh release download "$TAG" --repo "${{ github.repository }}" --pattern "ShokoSonarr-v*.zip"
+
+          # Build archives JSON array
+          ARCHIVES_JSON="[]"
+          shopt -s nullglob
+          for ZIP in ShokoSonarr-v*.zip; do
+            RID=$(echo "$ZIP" | sed -E 's/.*_(.*)\.zip/\1/')
+            CHECKSUM=$(sha256sum "$ZIP" | awk '{ print $1 }')
+            URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/${ZIP}"
+            ARCHIVE_ENTRY=$(jq -n \
+              --arg runtime "$RID" \
+              --arg abstraction "$ABSTRACTION_VERSION" \
+              --arg url "$URL" \
+              --arg checksum "$CHECKSUM" \
+              '{runtime: $runtime, abstraction: $abstraction, url: $url, checksum: $checksum}')
+            ARCHIVES_JSON=$(echo "$ARCHIVES_JSON" | jq --argjson entry "$ARCHIVE_ENTRY" '. += [$entry]')
+          done
+
+          RELEASE_ENTRY=$(jq -n \
+            --arg version "$VERSION" \
+            --arg tag "$TAG" \
+            --arg source_revision "$SOURCE_REVISION" \
+            --arg released_at "$RELEASED_AT" \
+            --arg channel "$CHANNEL" \
+            --arg release_notes "$RELEASE_NOTES" \
+            --argjson archives "$ARCHIVES_JSON" \
+            '{version: $version, tag: $tag, source_revision: $source_revision, released_at: $released_at, channel: $channel, release_notes: $release_notes, archives: $archives}')
+
+          jq --argjson release "$RELEASE_ENTRY" '
+            .releases |= [ $release ] + (. | map(select(.version != $release.version)))
+          ' manifest.json > manifest.json.tmp && mv manifest.json.tmp manifest.json
+
+          # Exit cleanly without committing if the manifest hasn't actually changed
+          if git diff --quiet manifest.json; then
+            echo "manifest.json unchanged, skipping commit"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add manifest.json
+          git commit -m "ci: update manifest for ${TAG}"
+          git push origin HEAD:master
