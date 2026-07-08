@@ -1,3 +1,4 @@
+using System.Reflection;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
@@ -12,7 +13,12 @@ namespace ShokoSonarr.Controllers;
 public class DashboardController : ControllerBase
 {
     private static readonly FileExtensionContentTypeProvider s_contentTypeProvider = new();
-    private static readonly string s_dashboardDir = Path.Combine(AppContext.BaseDirectory, "dashboard");
+
+    // AppContext.BaseDirectory resolves to the host's directory when loaded via the
+    // plugin AssemblyLoadContext, not this assembly's own folder — use its location instead.
+    private static readonly string s_dashboardDir = Path.Combine(
+        Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? AppContext.BaseDirectory,
+        "dashboard");
 
     /// <summary>Serves the main dashboard page.</summary>
     /// <returns>The dashboard HTML content.</returns>
