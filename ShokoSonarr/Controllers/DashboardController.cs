@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using IoFile = System.IO.File;
@@ -6,6 +7,7 @@ namespace ShokoSonarr.Controllers;
 
 /// <summary>Serves the embedded dashboard page and its static assets.</summary>
 [ApiController]
+[ApiVersion(ShokoSonarrConstants.ApiVersion)]
 [Route(ShokoSonarrConstants.BasePath)]
 public class DashboardController : ControllerBase
 {
