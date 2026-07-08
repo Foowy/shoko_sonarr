@@ -142,4 +142,53 @@ public class ScanCacheStoreTests : IDisposable
         Assert.NotNull(result);
         Assert.False(result!.IncludeSpecials);
     }
+
+    [Fact]
+    public void GetPendingSearches_WhenNoneAdded_ReturnsEmpty()
+    {
+        Assert.Empty(_store.GetPendingSearches());
+    }
+
+    [Fact]
+    public void AddPendingSearch_ThenGetPendingSearches_RoundTrips()
+    {
+        _store.AddPendingSearch(new PendingSearch
+        {
+            ShokoSeriesId = 42,
+            AnidbEpisodeId = 1001,
+            SonarrSeriesId = 55,
+            SonarrEpisodeId = 999,
+            TriggeredAtUtc = new DateTime(2026, 7, 8, 12, 0, 0, DateTimeKind.Utc),
+        });
+
+        var pending = _store.GetPendingSearches();
+
+        Assert.Single(pending);
+        Assert.Equal(42, pending[0].ShokoSeriesId);
+        Assert.Equal(1001, pending[0].AnidbEpisodeId);
+        Assert.Equal(55, pending[0].SonarrSeriesId);
+        Assert.Equal(999, pending[0].SonarrEpisodeId);
+    }
+
+    [Fact]
+    public void AddPendingSearch_CalledTwiceForSameKey_ReplacesRatherThanDuplicates()
+    {
+        _store.AddPendingSearch(new PendingSearch { ShokoSeriesId = 42, AnidbEpisodeId = 1001, SonarrSeriesId = 55, SonarrEpisodeId = 999, TriggeredAtUtc = DateTime.UtcNow });
+        _store.AddPendingSearch(new PendingSearch { ShokoSeriesId = 42, AnidbEpisodeId = 1001, SonarrSeriesId = 55, SonarrEpisodeId = 1000, TriggeredAtUtc = DateTime.UtcNow });
+
+        var pending = _store.GetPendingSearches();
+
+        Assert.Single(pending);
+        Assert.Equal(1000, pending[0].SonarrEpisodeId);
+    }
+
+    [Fact]
+    public void RemovePendingSearch_RemovesMatchingEntry()
+    {
+        _store.AddPendingSearch(new PendingSearch { ShokoSeriesId = 42, AnidbEpisodeId = 1001, SonarrSeriesId = 55, SonarrEpisodeId = 999, TriggeredAtUtc = DateTime.UtcNow });
+
+        _store.RemovePendingSearch(42, 1001);
+
+        Assert.Empty(_store.GetPendingSearches());
+    }
 }

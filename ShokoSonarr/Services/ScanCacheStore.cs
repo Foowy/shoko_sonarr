@@ -13,6 +13,7 @@ public class ScanCacheStore : IDisposable
     private const string SettingsCollectionName = "settings";
     private const string ScanCollectionName = "scans";
     private const string SeriesOverridesCollectionName = "seriesOverrides";
+    private const string PendingSearchesCollectionName = "pendingSearches";
     private const int SettingsDocumentId = 1;
     private const int ScanDocumentId = 1;
 
@@ -73,6 +74,28 @@ public class ScanCacheStore : IDisposable
         col.DeleteMany(o => o.ShokoSeriesId == shokoSeriesId);
         if (includeSpecials is not null)
             col.Insert(new SeriesOverride { ShokoSeriesId = shokoSeriesId, IncludeSpecials = includeSpecials });
+    }
+
+    /// <summary>Records that an episode's search was triggered in Sonarr, replacing any existing pending entry for the same episode.</summary>
+    public void AddPendingSearch(PendingSearch entry)
+    {
+        var col = _db.GetCollection<PendingSearch>(PendingSearchesCollectionName);
+        col.DeleteMany(p => p.ShokoSeriesId == entry.ShokoSeriesId && p.AnidbEpisodeId == entry.AnidbEpisodeId);
+        col.Insert(entry);
+    }
+
+    /// <summary>Gets all episodes currently pending reconciliation with Sonarr.</summary>
+    public List<PendingSearch> GetPendingSearches()
+    {
+        var col = _db.GetCollection<PendingSearch>(PendingSearchesCollectionName);
+        return col.FindAll().ToList();
+    }
+
+    /// <summary>Removes a pending search entry once it's been reconciled (or is being replaced — see <see cref="AddPendingSearch"/>).</summary>
+    public void RemovePendingSearch(int shokoSeriesId, int anidbEpisodeId)
+    {
+        var col = _db.GetCollection<PendingSearch>(PendingSearchesCollectionName);
+        col.DeleteMany(p => p.ShokoSeriesId == shokoSeriesId && p.AnidbEpisodeId == anidbEpisodeId);
     }
 
     /// <summary>Updates the action status for a single episode within the currently stored scan snapshot, if present.</summary>
