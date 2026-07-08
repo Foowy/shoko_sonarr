@@ -9,21 +9,23 @@
   <header>
     <h1>Missing Episodes</h1>
     <div class="actions">
-      <button id="scan-now">Scan Now</button>
+      <button id="scan-now" class="primary">Scan Now</button>
       <button id="open-settings">Settings</button>
     </div>
   </header>
 
   <section id="settings-panel" class="panel hidden">
-    <h2>Sonarr Settings</h2>
-    <label>Base URL <input id="settings-url" type="text" placeholder="http://192.168.1.40:8989" /></label>
-    <label>API Key <input id="settings-key" type="password" /></label>
-    <label>Scan Interval (hours) <input id="settings-interval" type="number" min="0" /></label>
-    <label>Quality Profile <select id="settings-quality-profile"></select></label>
-    <label>Root Folder <select id="settings-root-folder"></select></label>
+    <h2>Sonarr Connection</h2>
+    <div class="settings-grid">
+      <label>Base URL <input id="settings-url" type="text" placeholder="http://192.168.1.40:8989" /></label>
+      <label>API Key <input id="settings-key" type="password" /></label>
+      <label>Scan Interval (hours) <input id="settings-interval" type="number" min="0" /></label>
+      <label>Quality Profile <select id="settings-quality-profile"></select></label>
+      <label>Root Folder <select id="settings-root-folder"></select></label>
+    </div>
     <div class="actions">
       <button id="test-connection">Test Connection</button>
-      <button id="save-settings">Save</button>
+      <button id="save-settings" class="primary">Save</button>
     </div>
     <p id="settings-status"></p>
   </section>

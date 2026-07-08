@@ -1,13 +1,258 @@
-body { font-family: sans-serif; margin: 0; padding: 1rem; background: #1e1e1e; color: #eee; }
-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-.actions button { margin-left: 0.5rem; padding: 0.4rem 0.8rem; cursor: pointer; }
-.panel { background: #2a2a2a; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; }
+:root {
+  --bg: #15130f;
+  --bg-raised: #1c1912;
+  --bg-inset: #100e0a;
+  --ink: #f1ead9;
+  --ink-dim: #a89a80;
+  --ink-faint: #6e6350;
+  --rule: #362f22;
+  --amber: #e8a33d;
+  --amber-dim: #6b4d1e;
+  --teal: #4bab98;
+  --red: #d1583f;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 3px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--sans);
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+button, input, select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg-raised);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+header h1 {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0;
+  color: var(--ink);
+}
+
+header h1::before {
+  content: "REEL //";
+  color: var(--amber);
+  margin-right: 0.6em;
+}
+
+.actions { display: flex; gap: 0.5rem; }
+
+button {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-dim);
+  border-radius: var(--radius);
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+button:hover { border-color: var(--amber-dim); color: var(--ink); }
+
+button.primary {
+  border-color: var(--amber-dim);
+  color: var(--amber);
+}
+button.primary:hover { background: var(--amber-dim); color: var(--ink); }
+
+.panel {
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--rule);
+  padding: 1.25rem 1.5rem;
+}
 .panel.hidden { display: none; }
-.panel label { display: block; margin-bottom: 0.5rem; }
-.series-card { background: #2a2a2a; border-radius: 6px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
-.series-card .header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.series-card .badge { background: #c0392b; padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.85rem; }
-.series-card .episodes { display: none; margin-top: 0.5rem; }
-.series-card.expanded .episodes { display: block; }
-.series-card.no-match { opacity: 0.6; }
-.episode-row { display: flex; justify-content: space-between; padding: 0.2rem 0; }
+
+.panel h2 {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 1rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.9rem 1.25rem;
+  align-items: end;
+}
+
+.panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.panel input, .panel select {
+  background: var(--bg-inset);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0.5rem 0.6rem;
+  color: var(--ink);
+  font-size: 0.85rem;
+}
+
+.panel input:focus, .panel select:focus { border-color: var(--amber); }
+
+.panel .actions { margin-top: 1rem; }
+
+#settings-status {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  margin: 0.75rem 0 0;
+  min-height: 1em;
+}
+#settings-status.ok { color: var(--teal); }
+#settings-status.err { color: var(--red); }
+
+#series-list { padding: 0.5rem 1.5rem 3rem; }
+
+.series-row {
+  border-bottom: 1px solid var(--rule);
+}
+
+.series-row .header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.65rem 0;
+  cursor: pointer;
+}
+
+.series-row .chevron {
+  font-family: var(--mono);
+  color: var(--ink-faint);
+  width: 0.9em;
+  flex-shrink: 0;
+  transition: transform 120ms ease;
+}
+.series-row.expanded .chevron { transform: rotate(90deg); color: var(--amber); }
+
+.series-row .title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.strip {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.strip .tick {
+  width: 5px;
+  height: 14px;
+  background: var(--amber-dim);
+  border-radius: 1px;
+}
+.strip .tick.overflow {
+  width: auto;
+  height: auto;
+  background: none;
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  align-self: center;
+}
+
+.count {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--amber);
+  width: 3.5em;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.series-row.no-match .title { color: var(--ink-faint); }
+.series-row.no-match .strip .tick { background: var(--ink-faint); opacity: 0.4; }
+.series-row.no-match .count { color: var(--ink-faint); }
+
+.episodes {
+  display: none;
+  padding: 0 0 0.75rem 1.9rem;
+}
+.series-row.expanded .episodes { display: block; }
+
+.episode-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.3rem 0;
+  font-size: 0.82rem;
+  border-top: 1px solid var(--bg-inset);
+}
+.episode-row .ep-title { color: var(--ink-dim); }
+.episode-row .ep-code { font-family: var(--mono); color: var(--ink-faint); margin-right: 0.6em; }
+.episode-row .status {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  flex-shrink: 0;
+}
+.episode-row .status.queued, .episode-row .status.searched { color: var(--teal); }
+
+.row-actions { display: none; padding: 0 0 0.75rem 1.9rem; }
+.series-row.expanded .row-actions { display: block; }
+.row-actions .no-match-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+#series-list > .empty {
+  font-family: var(--mono);
+  color: var(--ink-faint);
+  padding: 2rem 0;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

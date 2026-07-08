@@ -8,49 +8,92 @@ async function fetchJson(path, options) {
   return res.status === 204 ? null : res.json();
 }
 
+const MAX_TICKS = 24;
+
+function buildStrip(count) {
+  const strip = document.createElement('div');
+  strip.className = 'strip';
+  const shown = Math.min(count, MAX_TICKS);
+  for (let i = 0; i < shown; i++) {
+    const tick = document.createElement('span');
+    tick.className = 'tick';
+    strip.appendChild(tick);
+  }
+  if (count > MAX_TICKS) {
+    const overflow = document.createElement('span');
+    overflow.className = 'tick overflow';
+    overflow.textContent = `+${count - MAX_TICKS}`;
+    strip.appendChild(overflow);
+  }
+  return strip;
+}
+
 function renderSeries(snapshot) {
   const container = document.getElementById('series-list');
   container.innerHTML = '';
   if (!snapshot || !snapshot.Data || snapshot.Data.Series.length === 0) {
-    container.textContent = 'No missing episodes found.';
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'No missing episodes found.';
+    container.appendChild(empty);
     return;
   }
 
   for (const series of snapshot.Data.Series) {
-    const card = document.createElement('div');
-    card.className = 'series-card' + (series.TvdbId ? '' : ' no-match');
+    const row = document.createElement('div');
+    row.className = 'series-row' + (series.TvdbId ? '' : ' no-match');
 
     const header = document.createElement('div');
     header.className = 'header';
-    header.innerHTML = `<span>${series.Title}</span><span class="badge">${series.MissingEpisodes.length} missing</span>`;
-    header.onclick = () => card.classList.toggle('expanded');
-    card.appendChild(header);
+
+    const chevron = document.createElement('span');
+    chevron.className = 'chevron';
+    chevron.textContent = '▸';
+    header.appendChild(chevron);
+
+    const title = document.createElement('span');
+    title.className = 'title';
+    title.textContent = series.Title;
+    header.appendChild(title);
+
+    header.appendChild(buildStrip(series.MissingEpisodes.length));
+
+    const count = document.createElement('span');
+    count.className = 'count';
+    count.textContent = `${series.MissingEpisodes.length} ep`;
+    header.appendChild(count);
+
+    header.onclick = () => row.classList.toggle('expanded');
+    row.appendChild(header);
 
     const episodesDiv = document.createElement('div');
     episodesDiv.className = 'episodes';
     for (const ep of series.MissingEpisodes) {
-      const row = document.createElement('div');
-      row.className = 'episode-row';
-      row.innerHTML = `<span>${ep.IsSpecial ? 'S' : 'E'}${ep.EpisodeNumber} — ${ep.Title || '(untitled)'}</span><span>${ep.ActionStatus}</span>`;
-      episodesDiv.appendChild(row);
+      const epRow = document.createElement('div');
+      epRow.className = 'episode-row';
+      const code = ep.IsSpecial ? `S${ep.EpisodeNumber}` : `E${ep.EpisodeNumber}`;
+      epRow.innerHTML = `<span><span class="ep-code">${code}</span><span class="ep-title">${ep.Title || '(untitled)'}</span></span><span class="status ${ep.ActionStatus}">${ep.ActionStatus}</span>`;
+      episodesDiv.appendChild(epRow);
     }
-    card.appendChild(episodesDiv);
+    row.appendChild(episodesDiv);
 
-    const actions = document.createElement('div');
-    actions.className = 'actions';
+    const rowActions = document.createElement('div');
+    rowActions.className = 'row-actions';
     if (series.TvdbId) {
       const searchBtn = document.createElement('button');
+      searchBtn.className = 'primary';
       searchBtn.textContent = 'Add to Sonarr / Search';
       searchBtn.onclick = () => addAndSearch(series);
-      actions.appendChild(searchBtn);
+      rowActions.appendChild(searchBtn);
     } else {
       const label = document.createElement('span');
+      label.className = 'no-match-label';
       label.textContent = 'No Sonarr match available';
-      actions.appendChild(label);
+      rowActions.appendChild(label);
     }
-    card.appendChild(actions);
+    row.appendChild(rowActions);
 
-    container.appendChild(card);
+    container.appendChild(row);
   }
 }
 
@@ -96,7 +139,7 @@ function populateSelect(id, items, valueKey, labelKey, selectedValue) {
 async function loadSonarrOptions(settings) {
   const result = await fetchJson('/Settings/sonarr-options', { method: 'POST', body: JSON.stringify(settings) });
   if (!result.Success) {
-    document.getElementById('settings-status').textContent = `Failed to load Sonarr options: ${result.Message}`;
+    setStatus(`Failed to load Sonarr options: ${result.Message}`, false);
     return;
   }
   populateSelect('settings-quality-profile', result.Data.qualityProfiles, 'Id', 'Name', savedQualityProfileId);
@@ -125,10 +168,17 @@ document.getElementById('open-settings').onclick = () => {
   document.getElementById('settings-panel').classList.toggle('hidden');
 };
 
+function setStatus(text, ok) {
+  const el = document.getElementById('settings-status');
+  el.textContent = text;
+  el.classList.toggle('ok', ok === true);
+  el.classList.toggle('err', ok === false);
+}
+
 document.getElementById('test-connection').onclick = async () => {
   const settings = currentSettingsForm();
   const result = await fetchJson('/Settings/test-connection', { method: 'POST', body: JSON.stringify(settings) });
-  document.getElementById('settings-status').textContent = result.Success ? 'Connected!' : `Failed: ${result.Message}`;
+  setStatus(result.Success ? 'Connected.' : `Failed: ${result.Message}`, result.Success);
   if (result.Success)
     await loadSonarrOptions(settings);
 };
@@ -140,7 +190,7 @@ document.getElementById('save-settings').onclick = async () => {
     rootFolderPath: document.getElementById('settings-root-folder').value || null,
   };
   await fetchJson('/Settings', { method: 'PUT', body: JSON.stringify(settings) });
-  document.getElementById('settings-status').textContent = 'Saved.';
+  setStatus('Saved.', true);
 };
 
 loadSettings();
