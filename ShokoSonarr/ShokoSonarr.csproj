@@ -6,7 +6,7 @@
     <RepositoryUrl>https://github.com/Foowy/shoko_sonarr</RepositoryUrl>
     <PackageTags>hosted-service, sonarr, missing-episodes</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
