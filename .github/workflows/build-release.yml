@@ -127,6 +127,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ github.event.inputs.tag_name || github.event.release.tag_name }}"
+          if [[ ! "$TAG" =~ ^v[0-9] ]]; then
+            echo "Not a valid release tag ($TAG), skipping manifest update."
+            exit 0
+          fi
           VERSION="${TAG#v}"
           SOURCE_REVISION=$(git rev-list -n 1 "$TAG")
 
