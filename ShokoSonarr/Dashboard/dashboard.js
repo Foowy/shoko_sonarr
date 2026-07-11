@@ -213,8 +213,13 @@ async function loadSettings() {
   populateSelect('settings-quality-profile', savedQualityProfileId ? [{ Id: savedQualityProfileId, Name: `#${savedQualityProfileId}` }] : [], 'Id', 'Name', savedQualityProfileId);
   populateSelect('settings-root-folder', savedRootFolderPath ? [{ Path: savedRootFolderPath }] : [], 'Path', 'Path', savedRootFolderPath);
   // The stored API key is masked here, not usable to call Sonarr — dropdowns above show the saved
-  // value as a single placeholder option; Test Connection (re-entering the real key) repopulates
-  // them with the live list from Sonarr.
+  // value as a placeholder option (name resolved server-side below, or falls back to the bare ID);
+  // Test Connection (re-entering the real key) repopulates them with the full live list from Sonarr.
+  if (savedQualityProfileId) {
+    const profileResult = await fetchJson('/Settings/quality-profile');
+    if (profileResult.Success)
+      populateSelect('settings-quality-profile', [profileResult.Data], 'Id', 'Name', savedQualityProfileId);
+  }
 }
 
 document.getElementById('scan-now').onclick = async () => {

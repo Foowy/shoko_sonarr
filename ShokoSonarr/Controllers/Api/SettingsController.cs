@@ -56,6 +56,25 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
         return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: null));
     }
 
+    /// <summary>Resolves the saved quality profile's display name from Sonarr, so the dashboard can show it instead of a bare ID before the user re-tests the connection.</summary>
+    /// <returns>200 with the profile's {id, name}, or success=false if no profile is saved or Sonarr couldn't be reached.</returns>
+    [HttpGet("quality-profile")]
+    public async Task<IActionResult> GetSavedQualityProfile()
+    {
+        var settings = cacheStore.GetSettings();
+        if (settings.QualityProfileId is null)
+            return Ok(new ApiResponse<object>(Success: false, Message: "No quality profile saved.", Data: null));
+
+        var profiles = await sonarrClient.GetQualityProfilesAsync(settings);
+        if (!profiles.Success)
+            return Ok(new ApiResponse<object>(Success: false, Message: profiles.ErrorMessage, Data: null));
+
+        var match = profiles.Data!.FirstOrDefault(p => p.Id == settings.QualityProfileId);
+        return match is null
+            ? Ok(new ApiResponse<object>(Success: false, Message: "Saved quality profile no longer exists in Sonarr.", Data: null))
+            : Ok(new ApiResponse<object>(Success: true, Message: null, Data: match));
+    }
+
     /// <summary>Gets Sonarr's quality profiles and root folders, for the dashboard's settings dropdowns.</summary>
     /// <param name="settings">The settings to use for the lookup (not necessarily saved yet).</param>
     /// <returns>200 with the available quality profiles and root folders, or success=false with an error message.</returns>
