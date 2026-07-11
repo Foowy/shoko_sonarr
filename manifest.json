@@ -10,7 +10,7 @@
     "sonarr",
     "missing-episodes"
   ],
-  "image_url": "https://raw.githubusercontent.com/Foowy/shoko_sonarr/master/assets/logo.svg",
+  "image_url": "https://raw.githubusercontent.com/Foowy/shoko_sonarr/master/assets/master_shokosonarr.png",
   "releases": [
     {
       "version": "0.3.0",
