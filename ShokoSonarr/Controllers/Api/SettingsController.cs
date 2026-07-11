@@ -46,12 +46,16 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
         return Ok(new ApiResponse<object>(Success: true, Message: null, Data: null));
     }
 
-    /// <summary>Tests connectivity to Sonarr using the given (not-yet-saved) settings.</summary>
+    /// <summary>Tests connectivity to Sonarr using the given (not-yet-saved) settings. A blank API key falls back
+    /// to the stored one, since the dashboard always submits a blank key unless the user just retyped it.</summary>
     /// <param name="settings">The settings to test.</param>
     /// <returns>200 with success=true if reachable, success=false with an error message otherwise.</returns>
     [HttpPost("test-connection")]
     public async Task<IActionResult> TestConnection([FromBody] SonarrSettings settings)
     {
+        if (string.IsNullOrEmpty(settings.ApiKey))
+            settings.ApiKey = cacheStore.GetSettings().ApiKey;
+
         var result = await sonarrClient.TestConnectionAsync(settings);
         return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: null));
     }
@@ -81,6 +85,9 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
     [HttpPost("sonarr-options")]
     public async Task<IActionResult> GetSonarrOptions([FromBody] SonarrSettings settings)
     {
+        if (string.IsNullOrEmpty(settings.ApiKey))
+            settings.ApiKey = cacheStore.GetSettings().ApiKey;
+
         var profiles = await sonarrClient.GetQualityProfilesAsync(settings);
         if (!profiles.Success)
             return Ok(new ApiResponse<object>(Success: false, Message: profiles.ErrorMessage, Data: null));
