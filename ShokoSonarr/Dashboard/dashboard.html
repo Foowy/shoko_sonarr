@@ -17,33 +17,44 @@
   </header>
 
   <section id="settings-panel" class="panel hidden">
-    <h2>Sonarr Connection</h2>
-    <div class="settings-grid">
-      <label>Base URL <input id="settings-url" type="text" placeholder="http://192.168.1.40:8989" /></label>
-      <label>API Key <input id="settings-key" type="password" /></label>
-      <label>Scan Interval (hours) <input id="settings-interval" type="number" min="0" /></label>
-      <label>Quality Profile <select id="settings-quality-profile"></select></label>
-      <label>Root Folder <select id="settings-root-folder"></select></label>
-      <label><input id="settings-include-specials" type="checkbox" /> Include Specials</label>
-      <label><input id="settings-hide-unaired" type="checkbox" /> Hide Unaired Episodes</label>
-      <label>Theme
-        <select id="theme-select">
-          <optgroup label="Auto">
-            <option value="system">System</option>
-          </optgroup>
-          <optgroup label="Dark">
-            <option value="ember-dark">Ember</option>
-            <option value="teal-dark">Deep Teal</option>
-            <option value="shoko-aniblackle">AniBlackle</option>
-          </optgroup>
-          <optgroup label="Light">
-            <option value="paper-light">Paper</option>
-          </optgroup>
-        </select>
-      </label>
+    <div class="settings-section">
+      <h2>Sonarr Connection</h2>
+      <div class="settings-grid">
+        <label>Base URL <input id="settings-url" type="text" placeholder="http://192.168.1.40:8989" /></label>
+        <label>API Key <input id="settings-key" type="password" /></label>
+        <label>Quality Profile <select id="settings-quality-profile"></select></label>
+        <label>Root Folder <select id="settings-root-folder"></select></label>
+      </div>
+      <div class="actions">
+        <button id="test-connection">Test Connection</button>
+      </div>
     </div>
+
+    <div class="settings-section">
+      <h2>Plugin Settings</h2>
+      <div class="settings-grid">
+        <label>Scan Interval (hours) <input id="settings-interval" type="number" min="0" /></label>
+        <label>Theme
+          <select id="theme-select">
+            <optgroup label="Auto">
+              <option value="system">System</option>
+            </optgroup>
+            <optgroup label="Dark">
+              <option value="ember-dark">Ember</option>
+              <option value="teal-dark">Deep Teal</option>
+              <option value="shoko-aniblackle">AniBlackle</option>
+            </optgroup>
+            <optgroup label="Light">
+              <option value="paper-light">Paper</option>
+            </optgroup>
+          </select>
+        </label>
+        <label><input id="settings-include-specials" type="checkbox" /> Include Specials</label>
+        <label><input id="settings-hide-unaired" type="checkbox" /> Hide Unaired Episodes</label>
+      </div>
+    </div>
+
     <div class="actions">
-      <button id="test-connection">Test Connection</button>
       <button id="save-settings" class="primary">Save</button>
     </div>
     <p id="settings-status"></p>
