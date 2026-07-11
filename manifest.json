@@ -11,5 +11,34 @@
     "missing-episodes"
   ],
   "image_url": null,
-  "releases": []
+  "releases": [
+    {
+      "version": "0.2.0",
+      "tag": "v0.2.0",
+      "source_revision": "b83482127f99562f9e03db5c9e33edf2b51c4767",
+      "released_at": "2026-07-11T12:01:33Z",
+      "channel": "Stable",
+      "release_notes": "**Full Changelog**: https://github.com/Foowy/shoko_sonarr/compare/v0.1.0...v0.2.0",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/shoko_sonarr/releases/download/v0.2.0/ShokoSonarr-v0.2.0_linux-arm64.zip",
+          "checksum": "16f159992422de06db6898fcf38608a9994ee06646d3f50b2a8e358a48c21531"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/shoko_sonarr/releases/download/v0.2.0/ShokoSonarr-v0.2.0_linux-x64.zip",
+          "checksum": "706bea1578cd87c5d7574c9a9423743b03de4cc6ed9cb1d76ea0c90bf720301e"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/shoko_sonarr/releases/download/v0.2.0/ShokoSonarr-v0.2.0_win-x64.zip",
+          "checksum": "8bc938b4ff6050ed9b4b0943b8a685d05f64aec6c1b6df4999a4e38ac410478a"
+        }
+      ]
+    }
+  ]
 }
