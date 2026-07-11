@@ -1,5 +1,31 @@
 const API_BASE = window.location.pathname.replace(/\/dashboard.*$/, '').replace('/api/plugin/ShokoSonarr', '/api/v1.0/ShokoSonarr');
 
+const THEME_STORAGE_KEY = 'shoko-sonarr-theme';
+const systemDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+function resolveTheme(pref) {
+  return pref === 'system' ? (systemDarkQuery.matches ? 'ember-dark' : 'paper-light') : pref;
+}
+
+function applyTheme(pref) {
+  document.documentElement.dataset.theme = resolveTheme(pref);
+}
+
+function initTheme() {
+  const pref = localStorage.getItem(THEME_STORAGE_KEY) || 'system';
+  document.getElementById('theme-select').value = pref;
+  applyTheme(pref);
+  systemDarkQuery.addEventListener('change', () => {
+    if ((localStorage.getItem(THEME_STORAGE_KEY) || 'system') === 'system')
+      applyTheme('system');
+  });
+}
+
+document.getElementById('theme-select').onchange = (e) => {
+  localStorage.setItem(THEME_STORAGE_KEY, e.target.value);
+  applyTheme(e.target.value);
+};
+
 async function fetchJson(path, options) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
@@ -95,14 +121,21 @@ function renderSeries(snapshot) {
     const specialsToggle = document.createElement('div');
     specialsToggle.className = 'specials-toggle';
     const currentOverride = series.IncludeSpecialsOverride === null || series.IncludeSpecialsOverride === undefined
-      ? 'default' : String(series.IncludeSpecialsOverride);
-    for (const [key, label, value] of [['default', 'Default', null], ['true', 'Include', true], ['false', 'Exclude', false]]) {
+      ? null : series.IncludeSpecialsOverride;
+    for (const [label, value, tooltip] of [
+      ['Include', true, 'Always include specials episodes for this series, regardless of the global setting'],
+      ['Exclude', false, 'Always exclude specials episodes for this series, regardless of the global setting'],
+    ]) {
       const btn = document.createElement('button');
       btn.textContent = label;
-      if (key === currentOverride) btn.classList.add('active');
-      btn.onclick = (e) => { e.stopPropagation(); setSpecialsOverride(series.ShokoSeriesId, value); };
+      btn.title = tooltip;
+      const isActive = currentOverride === value;
+      if (isActive) btn.classList.add('active');
+      // Clicking the already-active button clears the override back to the global default.
+      btn.onclick = (e) => { e.stopPropagation(); setSpecialsOverride(series.ShokoSeriesId, isActive ? null : value); };
       specialsToggle.appendChild(btn);
     }
+    if (currentOverride === null) specialsToggle.title = 'Following the global specials setting';
     rowActions.appendChild(specialsToggle);
     row.appendChild(rowActions);
 
@@ -142,6 +175,7 @@ function currentSettingsForm() {
     apiKey: document.getElementById('settings-key').value,
     scanIntervalHours: Number(document.getElementById('settings-interval').value),
     includeSpecials: document.getElementById('settings-include-specials').checked,
+    hideUnaired: document.getElementById('settings-hide-unaired').checked,
   };
 }
 
@@ -173,6 +207,7 @@ async function loadSettings() {
   document.getElementById('settings-url').value = result.Data.BaseUrl || '';
   document.getElementById('settings-interval').value = result.Data.ScanIntervalHours;
   document.getElementById('settings-include-specials').checked = result.Data.IncludeSpecials;
+  document.getElementById('settings-hide-unaired').checked = result.Data.HideUnaired;
   savedQualityProfileId = result.Data.QualityProfileId;
   savedRootFolderPath = result.Data.RootFolderPath;
   populateSelect('settings-quality-profile', savedQualityProfileId ? [{ Id: savedQualityProfileId, Name: `#${savedQualityProfileId}` }] : [], 'Id', 'Name', savedQualityProfileId);
@@ -189,6 +224,47 @@ document.getElementById('scan-now').onclick = async () => {
 
 document.getElementById('open-settings').onclick = () => {
   document.getElementById('settings-panel').classList.toggle('hidden');
+};
+
+function renderPending(entries) {
+  const container = document.getElementById('pending-list');
+  container.innerHTML = '';
+  if (!entries || entries.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'empty';
+    empty.textContent = 'No pending Sonarr searches.';
+    container.appendChild(empty);
+    return;
+  }
+  for (const entry of entries) {
+    const row = document.createElement('div');
+    row.className = 'pending-row';
+    const meta = document.createElement('span');
+    meta.className = 'pending-meta';
+    meta.textContent = `Series #${entry.ShokoSeriesId} · AniDB ep ${entry.AnidbEpisodeId} · triggered ${new Date(entry.TriggeredAtUtc).toLocaleString()}`;
+    row.appendChild(meta);
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.onclick = () => cancelPending(entry.ShokoSeriesId, entry.AnidbEpisodeId);
+    row.appendChild(cancelBtn);
+    container.appendChild(row);
+  }
+}
+
+async function loadPending() {
+  const result = await fetchJson('/Scan/pending');
+  renderPending(result.Data);
+}
+
+async function cancelPending(shokoSeriesId, anidbEpisodeId) {
+  const result = await fetchJson(`/Scan/pending/${shokoSeriesId}/${anidbEpisodeId}`, { method: 'DELETE' });
+  renderPending(result.Data);
+}
+
+document.getElementById('open-pending').onclick = () => {
+  document.getElementById('pending-panel').classList.toggle('hidden');
+  if (!document.getElementById('pending-panel').classList.contains('hidden'))
+    loadPending();
 };
 
 function setStatus(text, ok) {
@@ -216,5 +292,6 @@ document.getElementById('save-settings').onclick = async () => {
   setStatus('Saved.', true);
 };
 
+initTheme();
 loadSettings();
 loadScanResults();

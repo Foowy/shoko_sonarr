@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Shoko.Abstractions.Metadata.Services;
 using ShokoSonarr.Services;
 
 namespace ShokoSonarr.Controllers.Api;
@@ -8,7 +9,7 @@ namespace ShokoSonarr.Controllers.Api;
 public record SetSeriesSpecialsRequest(bool? IncludeSpecials);
 
 /// <summary>Endpoints for running and reading missing-episode scans.</summary>
-public class ScanController(MissingEpisodeScanner scanner, ScanCacheStore cacheStore) : ShokoSonarrBaseController
+public class ScanController(MissingEpisodeScanner scanner, ScanCacheStore cacheStore, IMetadataService metadataService, SonarrClient sonarrClient) : ShokoSonarrBaseController
 {
     /// <summary>Runs a missing-episode scan immediately and persists the result as the current snapshot.</summary>
     /// <returns>The freshly computed scan snapshot.</returns>
@@ -27,6 +28,9 @@ public class ScanController(MissingEpisodeScanner scanner, ScanCacheStore cacheS
     [HttpPut("series/{shokoSeriesId:int}/include-specials")]
     public async Task<IActionResult> SetSeriesSpecials(int shokoSeriesId, [FromBody] SetSeriesSpecialsRequest request)
     {
+        if (metadataService.GetShokoSeriesByID(shokoSeriesId) is null)
+            return NotFound(new ApiResponse<object>(Success: false, Message: $"No Shoko series with ID {shokoSeriesId}.", Data: null));
+
         cacheStore.SetSeriesOverride(shokoSeriesId, request.IncludeSpecials);
         var snapshot = await scanner.ScanAsync();
         cacheStore.SaveScan(snapshot);
@@ -40,5 +44,29 @@ public class ScanController(MissingEpisodeScanner scanner, ScanCacheStore cacheS
     {
         var snapshot = cacheStore.GetLastScan();
         return snapshot is null ? NoContent() : Ok(new ApiResponse<object>(Success: true, Message: null, Data: snapshot));
+    }
+
+    /// <summary>Gets all episodes currently pending reconciliation with Sonarr — searches the plugin has triggered but Shoko hasn't yet confirmed as imported.</summary>
+    [HttpGet("pending")]
+    public IActionResult GetPending() =>
+        Ok(new ApiResponse<object>(Success: true, Message: null, Data: cacheStore.GetPendingSearches()));
+
+    /// <summary>Cancels a pending search: tells Sonarr to unmonitor the episode and stops tracking it for reconciliation.</summary>
+    /// <param name="shokoSeriesId">The Shoko series ID.</param>
+    /// <param name="anidbEpisodeId">The AniDB episode ID.</param>
+    [HttpDelete("pending/{shokoSeriesId:int}/{anidbEpisodeId:int}")]
+    public async Task<IActionResult> CancelPending(int shokoSeriesId, int anidbEpisodeId)
+    {
+        var entry = cacheStore.GetPendingSearches().FirstOrDefault(p => p.ShokoSeriesId == shokoSeriesId && p.AnidbEpisodeId == anidbEpisodeId);
+        if (entry is null)
+            return NotFound(new ApiResponse<object>(Success: false, Message: "No pending search for that series/episode.", Data: null));
+
+        var settings = cacheStore.GetSettings();
+        var result = await sonarrClient.UnmonitorEpisodesAsync(settings, [entry.SonarrEpisodeId]);
+        if (!result.Success)
+            return Ok(new ApiResponse<object>(Success: false, Message: $"Failed to unmonitor in Sonarr: {result.ErrorMessage}", Data: cacheStore.GetPendingSearches()));
+
+        cacheStore.RemovePendingSearch(shokoSeriesId, anidbEpisodeId);
+        return Ok(new ApiResponse<object>(Success: true, Message: null, Data: cacheStore.GetPendingSearches()));
     }
 }

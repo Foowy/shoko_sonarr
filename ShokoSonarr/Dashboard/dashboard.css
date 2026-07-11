@@ -1,4 +1,5 @@
-:root {
+:root,
+:root[data-theme="ember-dark"] {
   --bg: #15130f;
   --bg-raised: #1c1912;
   --bg-inset: #100e0a;
@@ -13,6 +14,48 @@
   --mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
   --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
   --radius: 3px;
+}
+
+:root[data-theme="teal-dark"] {
+  --bg: #0e1614;
+  --bg-raised: #12211d;
+  --bg-inset: #0a1512;
+  --ink: #e4f3ee;
+  --ink-dim: #8bb3a7;
+  --ink-faint: #557a70;
+  --rule: #1f3a33;
+  --amber: #4bab98;
+  --amber-dim: #1f5b4e;
+  --teal: #e8a33d;
+  --red: #d1583f;
+}
+
+:root[data-theme="shoko-aniblackle"] {
+  --bg: #111111;
+  --bg-raised: #222222;
+  --bg-inset: #0b0e17;
+  --ink: #cfd8e3;
+  --ink-dim: #96b396;
+  --ink-faint: #6f7d6f;
+  --rule: #0b0e17;
+  --amber: #de7272;
+  --amber-dim: #333333;
+  --teal: #06c270;
+  --red: #ff5252;
+}
+
+:root[data-theme="paper-light"] {
+  --bg: #f5f1e8;
+  --bg-raised: #ffffff;
+  --bg-inset: #ece6d6;
+  --ink: #241f14;
+  --ink-dim: #5c5236;
+  --ink-faint: #8c8163;
+  --rule: #d8cfb4;
+  --amber: #b3701a;
+  --amber-dim: #e6c78f;
+  --teal: #2f7d6c;
+  --red: #b5402a;
 }
 
 * { box-sizing: border-box; }
@@ -66,7 +109,26 @@ header h1::before {
   margin-right: 0.6em;
 }
 
-.actions { display: flex; gap: 0.5rem; }
+.actions { display: flex; gap: 0.5rem; align-items: center; }
+
+.theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.theme-picker select {
+  background: var(--bg-inset);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0.3rem 0.5rem;
+  color: var(--ink);
+  font-size: 0.75rem;
+}
 
 button {
   background: transparent;
@@ -259,6 +321,23 @@ button.primary:hover { background: var(--amber-dim); color: var(--ink); }
   border-color: var(--amber);
   color: var(--amber);
   background: var(--amber-dim);
+}
+
+#pending-list .pending-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--bg-inset);
+  font-size: 0.82rem;
+}
+#pending-list .pending-row:first-child { border-top: none; }
+#pending-list .pending-meta { color: var(--ink-dim); font-family: var(--mono); font-size: 0.75rem; }
+#pending-list .empty {
+  font-family: var(--mono);
+  color: var(--ink-faint);
+  font-size: 0.8rem;
 }
 
 #series-list > .empty {

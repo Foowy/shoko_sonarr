@@ -21,6 +21,7 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
             QualityProfileId = settings.QualityProfileId,
             RootFolderPath = settings.RootFolderPath,
             IncludeSpecials = settings.IncludeSpecials,
+            HideUnaired = settings.HideUnaired,
         };
         return Ok(new ApiResponse<SonarrSettings>(Success: true, Message: null, Data: masked));
     }

@@ -20,4 +20,7 @@ public class SonarrSettings
 
     /// <summary>Whether to include specials when scanning for missing episodes, unless a series has its own override. Defaults to true (matches pre-existing behavior).</summary>
     public bool IncludeSpecials { get; set; } = true;
+
+    /// <summary>Whether to exclude episodes that haven't aired yet (a future air date, or no air date at all) from missing-episode results. Defaults to false (matches pre-existing behavior).</summary>
+    public bool HideUnaired { get; set; }
 }

@@ -1,3 +1,4 @@
+using LiteDB;
 using ShokoSonarr.Config;
 using ShokoSonarr.Models;
 using ShokoSonarr.Services;
@@ -117,6 +118,36 @@ public class ScanCacheStoreTests : IDisposable
 
         Assert.NotNull(result);
         Assert.False(result!.IncludeSpecials);
+    }
+
+    [Fact]
+    public void GetSettings_PreUpgradeDocMissingIncludeSpecials_DefaultsToTrue()
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), "shoko-sonarr-tests-" + Guid.NewGuid());
+        var pluginDir = Path.Combine(tempDir, "plugins", ShokoSonarrConstants.PluginDataSubfolder);
+        Directory.CreateDirectory(pluginDir);
+        var dbPath = Path.Combine(pluginDir, ShokoSonarrConstants.LiteDbFileName);
+
+        // Simulate a settings doc saved before IncludeSpecials existed — the field is simply absent, not null.
+        using (var db = new LiteDatabase(dbPath))
+        {
+            var col = db.GetCollection("settings");
+            col.Insert(new BsonDocument
+            {
+                ["_id"] = 1,
+                ["Settings"] = new BsonDocument { ["BaseUrl"] = "http://sonarr:8989" },
+            });
+        }
+
+        try
+        {
+            using var store = new ScanCacheStore(tempDir);
+            Assert.True(store.GetSettings().IncludeSpecials);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
     }
 
     [Fact]
