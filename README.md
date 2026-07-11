@@ -47,7 +47,7 @@ http://<your-shoko-host>:<port>/api/plugin/ShokoSonarr/dashboard
 
 ### Via Shoko's plugin manager (recommended)
 
-This repo publishes a live [`manifest.json`](manifest.json) that ShokoServer's plugin manager can consume directly as a repository — the same mechanism [ShokoRelay](https://github.com/natyusha/ShokoRelay) uses. It's kept up to date automatically: every tagged GitHub release adds its own entry (version, changelog, per-runtime archive + checksum) via CI.
+This repo publishes a live [`manifest.json`](manifest.json) that ShokoServer's plugin manager can consume directly as a repository. It's kept up to date automatically: every tagged GitHub release adds its own entry (version, changelog, per-runtime archive + checksum) via CI.
 
 1. In Shoko's WebUI, go to **Settings → Plugins** and add a new repository with:
    - **Name:** `Shoko Sonarr` (or anything you like)
