@@ -13,7 +13,7 @@
   <PropertyGroup>
     <Title>Shoko Sonarr</Title>
     <Authors>Foowy</Authors>
-    <Version>0.3.1</Version>
+    <Version>0.3.2</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,4 +30,39 @@
       <Link>dashboard\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
   </ItemGroup>
+
+  <!-- Embeds git/build metadata so ShokoServer's Plugin Manager can match this build to its
+       manifest.json release entry (source revision + RID + abstraction version) and show the
+       plugin's icon/release info in the Installed tab, not just the Browse/repository listing. -->
+  <Target Name="PluginAssemblyVersion" BeforeTargets="GetAssemblyVersion;GenerateAssemblyInfo" Condition="Exists('../.git')">
+    <PropertyGroup Condition="$(OS) == 'Windows_NT'">
+      <GitDateFormat>%%aI</GitDateFormat>
+      <NullStdErr>NUL</NullStdErr>
+    </PropertyGroup>
+    <PropertyGroup Condition="$(OS) != 'Windows_NT'">
+      <GitDateFormat>%aI</GitDateFormat>
+      <NullStdErr>/dev/null</NullStdErr>
+    </PropertyGroup>
+    <Exec Command="git log -1 --format=$(GitDateFormat)" ConsoleToMsBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitAuthorDateRaw" />
+    </Exec>
+    <Exec Command="git rev-parse HEAD" ConsoleToMsBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitCommitRaw" />
+    </Exec>
+    <Exec Command="git describe --exact-match --tags --match &quot;v[0-9]*.[0-9]*.[0-9]*&quot; 2>$(NullStdErr)" ConsoleToMsBuild="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="_GitTagRaw" />
+    </Exec>
+    <PropertyGroup>
+      <ReleaseDate>$([System.String]::Copy('$(_GitAuthorDateRaw)').Trim())</ReleaseDate>
+      <SourceRevision>$([System.String]::Copy('$(_GitCommitRaw)').Trim())</SourceRevision>
+      <ReleaseTag>$([System.String]::Copy('$(_GitTagRaw)').Trim())</ReleaseTag>
+    </PropertyGroup>
+    <ItemGroup>
+      <AssemblyMetadata Include="RuntimeIdentifier" Value="$(RuntimeIdentifier)" Condition="'$(RuntimeIdentifier)' != ''" />
+      <AssemblyMetadata Include="ReleaseChannel" Value="$(RELEASE_CHANNEL)" Condition="'$(RELEASE_CHANNEL)' != ''" />
+      <AssemblyMetadata Include="ReleaseDate" Value="$(ReleaseDate)" Condition="'$(ReleaseDate)' != ''" />
+      <AssemblyMetadata Include="ReleaseTag" Value="$(ReleaseTag)" Condition="'$(ReleaseTag)' != ''" />
+      <AssemblyMetadata Include="SourceRevision" Value="$(SourceRevision)" Condition="'$(SourceRevision)' != ''" />
+    </ItemGroup>
+  </Target>
 </Project>
