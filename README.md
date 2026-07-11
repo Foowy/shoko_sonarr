@@ -45,7 +45,17 @@ http://<your-shoko-host>:<port>/api/plugin/ShokoSonarr/dashboard
 
 ## Installing
 
-Copy the built plugin output into your Shoko Server plugins directory, or install via Shoko's plugin manager once this repo publishes a discoverable manifest/release. Manual deploy:
+### Via Shoko's plugin manager (recommended)
+
+This repo publishes a live [`manifest.json`](manifest.json) that ShokoServer's plugin manager can consume directly as a repository — the same mechanism [ShokoRelay](https://github.com/natyusha/ShokoRelay) uses. It's kept up to date automatically: every tagged GitHub release adds its own entry (version, changelog, per-runtime archive + checksum) via CI.
+
+1. In Shoko's WebUI, go to **Settings → Plugins** and add a new repository with:
+   - **Name:** `Shoko Sonarr` (or anything you like)
+   - **URL:** `https://raw.githubusercontent.com/Foowy/shoko_sonarr/master/manifest.json`
+2. Shoko fetches the manifest and lists Shoko Sonarr as an installable package — pick a release and install it from there.
+3. Once installed, enable **auto-upgrade** on the repository/package if you want future releases pulled in automatically; otherwise re-check the plugin manager after new releases.
+
+### Manual deploy
 
 ```bash
 dotnet publish ShokoSonarr -c Release -o <output-dir>
