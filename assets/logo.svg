@@ -6,14 +6,14 @@
     </linearGradient>
   </defs>
 
-  <path d="M 96 296 C 96 176, 416 176, 416 296"
-        fill="none" stroke="url(#span)" stroke-width="20" stroke-linecap="round"/>
+  <rect x="86" y="140" width="24" height="260" rx="10" fill="#14b8a6"/>
+  <rect x="402" y="140" width="24" height="260" rx="10" fill="#f97316"/>
 
-  <rect x="86" y="296" width="20" height="120" rx="8" fill="#14b8a6"/>
-  <rect x="406" y="296" width="20" height="120" rx="8" fill="#f97316"/>
+  <path d="M 98 172 Q 256 280 414 172"
+        fill="none" stroke="url(#span)" stroke-width="14" stroke-linecap="round"/>
 
   <rect x="72" y="392" width="368" height="24" rx="12" fill="url(#span)"/>
 
-  <circle cx="96" cy="200" r="48" fill="#14b8a6"/>
-  <circle cx="416" cy="200" r="48" fill="#f97316"/>
+  <circle cx="98" cy="110" r="42" fill="#14b8a6"/>
+  <circle cx="414" cy="110" r="42" fill="#f97316"/>
 </svg>
