@@ -22,6 +22,7 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
             RootFolderPath = settings.RootFolderPath,
             IncludeSpecials = settings.IncludeSpecials,
             HideUnaired = settings.HideUnaired,
+            NotificationWebhookUrl = string.IsNullOrEmpty(settings.NotificationWebhookUrl) ? null : new string('*', 8),
         };
         return Ok(new ApiResponse<SonarrSettings>(Success: true, Message: null, Data: masked));
     }
@@ -41,6 +42,8 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
             settings.QualityProfileId = stored.QualityProfileId;
         if (string.IsNullOrEmpty(settings.RootFolderPath))
             settings.RootFolderPath = stored.RootFolderPath;
+        if (string.IsNullOrEmpty(settings.NotificationWebhookUrl))
+            settings.NotificationWebhookUrl = stored.NotificationWebhookUrl;
 
         cacheStore.SaveSettings(settings);
         return Ok(new ApiResponse<object>(Success: true, Message: null, Data: null));

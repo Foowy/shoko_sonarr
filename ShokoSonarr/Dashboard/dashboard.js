@@ -197,6 +197,7 @@ function currentSettingsForm() {
     scanIntervalHours: Number(document.getElementById('settings-interval').value),
     includeSpecials: document.getElementById('settings-include-specials').checked,
     hideUnaired: document.getElementById('settings-hide-unaired').checked,
+    notificationWebhookUrl: document.getElementById('settings-webhook').value,
   };
 }
 
@@ -230,6 +231,7 @@ async function loadSettings() {
   // (currentSettingsForm's apiKey: '') keeps hitting the backend's "preserve existing key" path.
   // The placeholder is just a visual "a key is saved" indicator, not the key itself.
   document.getElementById('settings-key').placeholder = result.Data.ApiKey ? 'Key saved (leave blank to keep)' : '';
+  document.getElementById('settings-webhook').placeholder = result.Data.NotificationWebhookUrl ? 'Webhook saved (leave blank to keep)' : '';
   document.getElementById('settings-interval').value = result.Data.ScanIntervalHours;
   document.getElementById('settings-include-specials').checked = result.Data.IncludeSpecials;
   document.getElementById('settings-hide-unaired').checked = result.Data.HideUnaired;
@@ -357,6 +359,7 @@ document.getElementById('save-settings').onclick = async () => {
   await fetchJson('/Settings', { method: 'PUT', body: JSON.stringify(settings) });
   setStatus('Saved.', true);
   document.getElementById('settings-key').value = '';
+  document.getElementById('settings-webhook').value = '';
   await loadSettings();
 };
 

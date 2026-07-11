@@ -16,7 +16,7 @@ public record AddAndSearchRequest(int ShokoSeriesId, int TvdbId, List<int> Anidb
 public record SearchRequest(int ShokoSeriesId, int SonarrSeriesId, List<int> AnidbEpisodeIds);
 
 /// <summary>Endpoints for matching Shoko series to Sonarr and triggering add/monitor/search actions.</summary>
-public class SonarrController(SeriesMatcher matcher, SonarrClient sonarrClient, ScanCacheStore cacheStore) : ShokoSonarrBaseController
+public class SonarrController(SeriesMatcher matcher, SonarrClient sonarrClient, ScanCacheStore cacheStore, NotificationService notificationService) : ShokoSonarrBaseController
 {
     /// <summary>Resolves a Sonarr match for the given Shoko series from the cached scan snapshot.</summary>
     /// <param name="shokoSeriesId">The Shoko series ID.</param>
@@ -150,6 +150,9 @@ public class SonarrController(SeriesMatcher matcher, SonarrClient sonarrClient, 
                 TimestampUtc = triggeredAt,
             });
         }
+
+        var triggeredCount = targetEpisodes.Count - unmappedIds.Count;
+        await notificationService.NotifyAsync(settings, $"Triggered Sonarr search for {triggeredCount} episode(s) of **{series.Title}**");
 
         var message = unmappedTitles.Count > 0 ? $"Search triggered. Unmapped episodes skipped: {string.Join(", ", unmappedTitles)}" : null;
         return Ok(new ApiResponse<object>(Success: true, Message: message, Data: null));

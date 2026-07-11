@@ -21,6 +21,7 @@ public class ServiceRegistration : IPluginServiceRegistration
         serviceCollection.AddSingleton<MissingEpisodeScanner>();
         serviceCollection.AddSingleton<SonarrClient>();
         serviceCollection.AddSingleton<SeriesMatcher>();
+        serviceCollection.AddSingleton<NotificationService>();
         serviceCollection.AddHostedService<ScanSchedulerService>();
     }
 }
