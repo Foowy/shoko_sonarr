@@ -221,6 +221,10 @@ async function loadSonarrOptions(settings) {
 async function loadSettings() {
   const result = await fetchJson('/Settings');
   document.getElementById('settings-url').value = result.Data.BaseUrl || '';
+  // Never populate the actual key into .value: the field must stay blank so save-with-no-key
+  // (currentSettingsForm's apiKey: '') keeps hitting the backend's "preserve existing key" path.
+  // The placeholder is just a visual "a key is saved" indicator, not the key itself.
+  document.getElementById('settings-key').placeholder = result.Data.ApiKey ? 'Key saved (leave blank to keep)' : '';
   document.getElementById('settings-interval').value = result.Data.ScanIntervalHours;
   document.getElementById('settings-include-specials').checked = result.Data.IncludeSpecials;
   document.getElementById('settings-hide-unaired').checked = result.Data.HideUnaired;
@@ -311,6 +315,8 @@ document.getElementById('save-settings').onclick = async () => {
   };
   await fetchJson('/Settings', { method: 'PUT', body: JSON.stringify(settings) });
   setStatus('Saved.', true);
+  document.getElementById('settings-key').value = '';
+  await loadSettings();
 };
 
 initTheme();
