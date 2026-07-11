@@ -56,6 +56,9 @@ function buildStrip(count) {
 
 function renderSeries(snapshot) {
   const container = document.getElementById('series-list');
+  // Re-rendering rebuilds every row from scratch, which would otherwise collapse anything the user
+  // had expanded (e.g. on every Live Refresh tick) -- carry the expanded set across the rebuild.
+  const expandedIds = new Set([...container.querySelectorAll('.series-row.expanded')].map(r => r.dataset.seriesId));
   container.innerHTML = '';
   if (!snapshot || !snapshot.Data || snapshot.Data.Series.length === 0) {
     const empty = document.createElement('div');
@@ -68,6 +71,8 @@ function renderSeries(snapshot) {
   for (const series of snapshot.Data.Series) {
     const row = document.createElement('div');
     row.className = 'series-row' + (series.TvdbId ? '' : ' no-match');
+    row.dataset.seriesId = series.ShokoSeriesId;
+    if (expandedIds.has(String(series.ShokoSeriesId))) row.classList.add('expanded');
 
     const header = document.createElement('div');
     header.className = 'header';
