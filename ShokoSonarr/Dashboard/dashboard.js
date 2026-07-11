@@ -166,6 +166,22 @@ async function loadScanResults() {
   renderSeries(result);
 }
 
+const LIVE_REFRESH_STORAGE_KEY = 'shoko-sonarr-live-refresh';
+const LIVE_REFRESH_INTERVAL_MS = 20_000;
+let liveRefreshTimer = null;
+
+function setLiveRefresh(enabled) {
+  localStorage.setItem(LIVE_REFRESH_STORAGE_KEY, enabled ? '1' : '0');
+  clearInterval(liveRefreshTimer);
+  liveRefreshTimer = null;
+  if (enabled) {
+    // Just re-reads the last saved snapshot (cheap LiteDB read) — never triggers a rescan or Sonarr calls.
+    liveRefreshTimer = setInterval(() => { if (!document.hidden) loadScanResults(); }, LIVE_REFRESH_INTERVAL_MS);
+  }
+}
+
+document.getElementById('live-refresh').onchange = (e) => setLiveRefresh(e.target.checked);
+
 let savedQualityProfileId = null;
 let savedRootFolderPath = null;
 
@@ -298,5 +314,7 @@ document.getElementById('save-settings').onclick = async () => {
 };
 
 initTheme();
+document.getElementById('live-refresh').checked = localStorage.getItem(LIVE_REFRESH_STORAGE_KEY) === '1';
+setLiveRefresh(document.getElementById('live-refresh').checked);
 loadSettings();
 loadScanResults();
