@@ -13,6 +13,34 @@
   "image_url": null,
   "releases": [
     {
+      "version": "0.3.0",
+      "tag": "v0.3.0",
+      "source_revision": "ac1bcfcbbe4c7e35b5b53e775f6e12fb8474888a",
+      "released_at": "2026-07-11T13:40:43Z",
+      "channel": "Stable",
+      "release_notes": "## What's Changed\n* chore(deps): bump actions/checkout from 6 to 7 by @dependabot[bot] in https://github.com/Foowy/shoko_sonarr/pull/1\n* chore(deps): bump github/codeql-action from 3 to 4 by @dependabot[bot] in https://github.com/Foowy/shoko_sonarr/pull/2\n* Bump Microsoft.NET.Test.Sdk from 17.12.0 to 18.7.0 by @dependabot[bot] in https://github.com/Foowy/shoko_sonarr/pull/3\n* Bump NLog from 6.1.3 to 6.1.4 by @dependabot[bot] in https://github.com/Foowy/shoko_sonarr/pull/4\n* Bump xunit.runner.visualstudio from 2.8.2 to 3.1.5 by @dependabot[bot] in https://github.com/Foowy/shoko_sonarr/pull/7\n* Bump Shoko.Abstractions from 6.0.0-alpha.69 to 6.0.0-alpha.72 by @dependabot[bot] in https://github.com/Foowy/shoko_sonarr/pull/5\n* Bump xunit from 2.9.2 to 2.9.3 by @dependabot[bot] in https://github.com/Foowy/shoko_sonarr/pull/6\n\n## New Contributors\n* @dependabot[bot] made their first contribution in https://github.com/Foowy/shoko_sonarr/pull/1\n\n**Full Changelog**: https://github.com/Foowy/shoko_sonarr/compare/v0.2.0...v0.3.0",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/shoko_sonarr/releases/download/v0.3.0/ShokoSonarr-v0.3.0_linux-arm64.zip",
+          "checksum": "2c6955103325a205dfd22855f624c3e316982c20420290ade78feadbfdf58d6d"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/shoko_sonarr/releases/download/v0.3.0/ShokoSonarr-v0.3.0_linux-x64.zip",
+          "checksum": "a94f7497611130446d32d8e82a4e82a7ef46a580d857dcd7ab36bb500618fb26"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/shoko_sonarr/releases/download/v0.3.0/ShokoSonarr-v0.3.0_win-x64.zip",
+          "checksum": "0cae1947530eb8be297e7967f1c06efa2910eb3c9bc25c41a9c37e7b5d7472df"
+        }
+      ]
+    },
+    {
       "version": "0.2.0",
       "tag": "v0.2.0",
       "source_revision": "b83482127f99562f9e03db5c9e33edf2b51c4767",
