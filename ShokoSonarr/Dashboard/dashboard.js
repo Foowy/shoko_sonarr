@@ -367,9 +367,53 @@ function renderSuggestions(suggestions) {
   for (const s of suggestions) {
     const row = document.createElement('div');
     row.className = 'suggestion-row';
-    row.innerHTML = `Because you have <strong>${s.OwningSeriesTitle}</strong>, you're missing its <strong>${s.RelationType}</strong>: <em>${s.RelatedTitle}</em>`;
+
+    const text = document.createElement('div');
+    text.innerHTML = `Because you have <strong>${s.OwningSeriesTitle}</strong>, you're missing its <strong>${s.RelationType}</strong>: <em>${s.RelatedTitle}</em>`;
+    row.appendChild(text);
+
+    const addBtn = document.createElement('button');
+    addBtn.textContent = 'Add to Sonarr';
+    addBtn.onclick = () => searchTitleForSuggestion(s.RelatedTitle, row, addBtn);
+    row.appendChild(addBtn);
+
     container.appendChild(row);
   }
+}
+
+async function searchTitleForSuggestion(title, row, triggerBtn) {
+  triggerBtn.disabled = true;
+  triggerBtn.textContent = 'Searching…';
+  const result = await fetchJson('/Sonarr/search-title', { method: 'POST', body: JSON.stringify({ title }) });
+  triggerBtn.remove();
+
+  if (!result.Success || !result.Data || result.Data.length === 0) {
+    const none = document.createElement('div');
+    none.className = 'suggestion-candidates-empty';
+    none.textContent = result.Message || 'No Sonarr matches found.';
+    row.appendChild(none);
+    return;
+  }
+
+  const candidates = document.createElement('div');
+  candidates.className = 'suggestion-candidates';
+  for (const candidate of result.Data) {
+    const candBtn = document.createElement('button');
+    candBtn.textContent = `${candidate.Title} (${candidate.Year || '?'})`;
+    candBtn.onclick = () => addDiscoverySeries(candidate.TvdbId, candidate.Title, candidates);
+    candidates.appendChild(candBtn);
+  }
+  row.appendChild(candidates);
+}
+
+async function addDiscoverySeries(tvdbId, title, candidatesContainer) {
+  const result = await fetchJson('/Sonarr/add-discovery', {
+    method: 'POST',
+    body: JSON.stringify({ tvdbId, title }),
+  });
+  alert(result.Success ? `Added ${title}.` : `Failed: ${result.Message}`);
+  if (result.Success)
+    candidatesContainer.remove();
 }
 
 async function loadSuggestions() {
