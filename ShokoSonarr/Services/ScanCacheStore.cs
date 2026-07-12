@@ -50,6 +50,29 @@ public class ScanCacheStore : IDisposable
         col.Upsert(new SettingsDocument { Id = SettingsDocumentId, Settings = settings });
     }
 
+    /// <summary>Sets (or clears, when <paramref name="includeSpecials"/> is null) the specials override for a series, preserving any Sonarr quality-profile/root-folder override already set.</summary>
+    public void SetSeriesOverride(int shokoSeriesId, bool? includeSpecials) =>
+        UpsertSeriesOverride(shokoSeriesId, o => o.IncludeSpecials = includeSpecials);
+
+    /// <summary>Sets (or clears, when both parameters are null) the Sonarr quality-profile/root-folder override for a series, preserving any specials override already set.</summary>
+    public void SetSeriesSonarrOverride(int shokoSeriesId, int? qualityProfileId, string? rootFolderPath) =>
+        UpsertSeriesOverride(shokoSeriesId, o =>
+        {
+            o.QualityProfileId = qualityProfileId;
+            o.RootFolderPath = rootFolderPath;
+        });
+
+    /// <summary>Reads the existing override row (if any), applies <paramref name="mutate"/>, then replaces the row — deleting it entirely if the result has no fields set. Read-mutate-write instead of blind delete+insert, so setting one override field never wipes another already-set field on the same series.</summary>
+    private void UpsertSeriesOverride(int shokoSeriesId, Action<SeriesOverride> mutate)
+    {
+        var col = _db.GetCollection<SeriesOverride>(SeriesOverridesCollectionName);
+        var existing = col.Find(o => o.ShokoSeriesId == shokoSeriesId).FirstOrDefault() ?? new SeriesOverride { ShokoSeriesId = shokoSeriesId };
+        mutate(existing);
+        col.DeleteMany(o => o.ShokoSeriesId == shokoSeriesId);
+        if (existing.IncludeSpecials is not null || existing.QualityProfileId is not null || !string.IsNullOrEmpty(existing.RootFolderPath))
+            col.Insert(existing);
+    }
+
     /// <summary>Gets the most recent scan snapshot, or null if no scan has run yet.</summary>
     public ScanSnapshot? GetLastScan()
     {
@@ -71,14 +94,6 @@ public class ScanCacheStore : IDisposable
         return col.Find(o => o.ShokoSeriesId == shokoSeriesId).FirstOrDefault();
     }
 
-    /// <summary>Sets (or clears, when <paramref name="includeSpecials"/> is null) the specials override for a series.</summary>
-    public void SetSeriesOverride(int shokoSeriesId, bool? includeSpecials)
-    {
-        var col = _db.GetCollection<SeriesOverride>(SeriesOverridesCollectionName);
-        col.DeleteMany(o => o.ShokoSeriesId == shokoSeriesId);
-        if (includeSpecials is not null)
-            col.Insert(new SeriesOverride { ShokoSeriesId = shokoSeriesId, IncludeSpecials = includeSpecials });
-    }
 
     /// <summary>Records that an episode's search was triggered in Sonarr, replacing any existing pending entry for the same episode.</summary>
     public void AddPendingSearch(PendingSearch entry)

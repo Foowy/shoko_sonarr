@@ -121,6 +121,56 @@ public class ScanCacheStoreTests : IDisposable
     }
 
     [Fact]
+    public void SetSeriesOverride_ThenSetSeriesSonarrOverride_PreservesSpecialsOverride()
+    {
+        _store.SetSeriesOverride(shokoSeriesId: 1, includeSpecials: true);
+        _store.SetSeriesSonarrOverride(shokoSeriesId: 1, qualityProfileId: 4, rootFolderPath: "/anime");
+
+        var result = _store.GetSeriesOverride(1);
+
+        Assert.True(result!.IncludeSpecials);
+        Assert.Equal(4, result.QualityProfileId);
+        Assert.Equal("/anime", result.RootFolderPath);
+    }
+
+    [Fact]
+    public void SetSeriesSonarrOverride_ThenSetSeriesOverride_PreservesSonarrOverride()
+    {
+        _store.SetSeriesSonarrOverride(shokoSeriesId: 2, qualityProfileId: 7, rootFolderPath: "/4k");
+        _store.SetSeriesOverride(shokoSeriesId: 2, includeSpecials: false);
+
+        var result = _store.GetSeriesOverride(2);
+
+        Assert.False(result!.IncludeSpecials);
+        Assert.Equal(7, result.QualityProfileId);
+        Assert.Equal("/4k", result.RootFolderPath);
+    }
+
+    [Fact]
+    public void SetSeriesOverride_NullClearsSpecialsButNotSonarrOverride()
+    {
+        _store.SetSeriesSonarrOverride(shokoSeriesId: 3, qualityProfileId: 2, rootFolderPath: "/x");
+        _store.SetSeriesOverride(shokoSeriesId: 3, includeSpecials: true);
+        _store.SetSeriesOverride(shokoSeriesId: 3, includeSpecials: null);
+
+        var result = _store.GetSeriesOverride(3);
+
+        Assert.Null(result!.IncludeSpecials);
+        Assert.Equal(2, result.QualityProfileId);
+    }
+
+    [Fact]
+    public void SetSeriesSonarrOverride_BothNull_ClearsOverrideRowIfNoOtherFieldsSet()
+    {
+        _store.SetSeriesSonarrOverride(shokoSeriesId: 4, qualityProfileId: 5, rootFolderPath: "/y");
+        _store.SetSeriesSonarrOverride(shokoSeriesId: 4, qualityProfileId: null, rootFolderPath: null);
+
+        var result = _store.GetSeriesOverride(4);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
     public void GetSettings_PreUpgradeDocMissingIncludeSpecials_DefaultsToTrue()
     {
         var tempDir = Path.Combine(Path.GetTempPath(), "shoko-sonarr-tests-" + Guid.NewGuid());
