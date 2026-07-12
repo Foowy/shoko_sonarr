@@ -24,6 +24,9 @@ public record SearchTitleRequest(string Title);
 /// <param name="Title">The series title to add.</param>
 public record AddDiscoveryRequest(int TvdbId, string Title);
 
+/// <summary>Result of a single series' tag sync attempt, for the sync-tags summary response.</summary>
+public record TagSyncResult(int Updated, int SkippedNoMatch, int Failed);
+
 /// <summary>Endpoints for matching Shoko series to Sonarr and triggering add/monitor/search actions.</summary>
 public class SonarrController(SeriesMatcher matcher, SonarrClient sonarrClient, ScanCacheStore cacheStore, NotificationService notificationService) : ShokoSonarrBaseController
 {
@@ -72,6 +75,39 @@ public class SonarrController(SeriesMatcher matcher, SonarrClient sonarrClient, 
         return Ok(new ApiResponse<object>(Success: true, Message: null, Data: null));
     }
 
+    /// <summary>Retroactively tags owned series already present in Sonarr with their Shoko group's title, for series added before tag propagation existed. Series not yet in Sonarr are skipped — they get tagged automatically at add time.</summary>
+    /// <returns>200 with a summary of updated/skipped/failed counts.</returns>
+    [HttpPost("sync-tags")]
+    public async Task<IActionResult> SyncTags()
+    {
+        var snapshot = cacheStore.GetLastScan();
+        var settings = cacheStore.GetSettings();
+        var candidates = (snapshot?.Series ?? []).Where(s => !string.IsNullOrEmpty(s.GroupTitle) && s.TvdbId.HasValue).ToList();
+
+        int updated = 0, skipped = 0, failed = 0;
+        foreach (var series in candidates)
+        {
+            var existing = await sonarrClient.GetExistingSeriesByTvdbIdAsync(settings, series.TvdbId!.Value);
+            if (!existing.Success || existing.Data!.Count == 0)
+            {
+                skipped++;
+                continue;
+            }
+
+            var tag = await sonarrClient.EnsureTagIdAsync(settings, series.GroupTitle!);
+            if (!tag.Success)
+            {
+                failed++;
+                continue;
+            }
+
+            var update = await sonarrClient.UpdateSeriesTagAsync(settings, existing.Data[0].Id, tag.Data);
+            if (update.Success) updated++; else failed++;
+        }
+
+        return Ok(new ApiResponse<object>(Success: true, Message: null, Data: new TagSyncResult(updated, skipped, failed)));
+    }
+
     /// <summary>Adds a series to Sonarr (monitoring disabled by default), then monitors and searches for the given missing episodes.</summary>
     /// <param name="request">The add-and-search request.</param>
     /// <returns>200 on success, 409/400 with a message describing what failed.</returns>
@@ -94,7 +130,15 @@ public class SonarrController(SeriesMatcher matcher, SonarrClient sonarrClient, 
         if (existing.Success && existing.Data!.Count > 0)
             return await MonitorAndSearchAsync(settings, request.ShokoSeriesId, existing.Data[0].Id, request.AnidbEpisodeIds, series);
 
-        var added = await sonarrClient.AddSeriesAsync(settings, request.TvdbId, series.Title, settings.QualityProfileId.Value, settings.RootFolderPath!);
+        List<int>? tagIds = null;
+        if (!string.IsNullOrEmpty(series.GroupTitle))
+        {
+            var tag = await sonarrClient.EnsureTagIdAsync(settings, series.GroupTitle);
+            if (tag.Success)
+                tagIds = [tag.Data];
+        }
+
+        var added = await sonarrClient.AddSeriesAsync(settings, request.TvdbId, series.Title, settings.QualityProfileId.Value, settings.RootFolderPath!, tagIds: tagIds);
         if (!added.Success)
             return Conflict(new ApiResponse<object>(Success: false, Message: added.ErrorMessage, Data: null));
 
