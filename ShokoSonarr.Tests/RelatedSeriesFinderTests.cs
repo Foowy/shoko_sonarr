@@ -10,12 +10,13 @@ namespace ShokoSonarr.Tests;
 
 public class RelatedSeriesFinderTests
 {
-    private static Mock<ISeries> MakeRelatedSeries(int id, string title, IReadOnlyList<int> shokoSeriesIds)
+    private static Mock<ISeries> MakeRelatedSeries(int id, string title, IReadOnlyList<int> shokoSeriesIds, AnimeType type = AnimeType.TV)
     {
         var related = new Mock<ISeries>();
         related.Setup(s => s.ID).Returns(id);
         related.Setup(s => s.Title).Returns(title);
         related.Setup(s => s.ShokoSeriesIDs).Returns(shokoSeriesIds);
+        related.Setup(s => s.Type).Returns(type);
         return related;
     }
 
@@ -115,6 +116,27 @@ public class RelatedSeriesFinderTests
         var suggestions = finder.FindSuggestions();
 
         Assert.Single(suggestions);
+    }
+
+    [Fact]
+    public void FindSuggestions_MovieTypeRelated_PopulatesRelatedType()
+    {
+        var relatedSeries = MakeRelatedSeries(300, "Movie Sequel", [], type: AnimeType.Movie);
+        var relation = MakeRelation(RelationType.Sequel, relatedSeries.Object);
+
+        var owned = new Mock<IShokoSeries>();
+        owned.Setup(s => s.ID).Returns(200);
+        owned.Setup(s => s.Title).Returns("Owned Show 6");
+        owned.Setup(s => s.RelatedSeries).Returns([relation.Object]);
+
+        var metadataService = new Mock<IMetadataService>();
+        metadataService.Setup(m => m.GetAllShokoSeries()).Returns([owned.Object]);
+
+        var finder = new RelatedSeriesFinder(metadataService.Object);
+        var suggestions = finder.FindSuggestions();
+
+        Assert.Single(suggestions);
+        Assert.Equal("Movie", suggestions[0].RelatedType);
     }
 
     [Fact]

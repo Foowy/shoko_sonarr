@@ -46,6 +46,7 @@ public class RelatedSeriesFinder(IMetadataService metadataService)
                     OwningSeriesTitle = series.Title,
                     RelationType = relation.RelationType.ToString(),
                     RelatedTitle = related.Title,
+                    RelatedType = related.Type.ToString(),
                 });
             }
         }

@@ -14,4 +14,7 @@ public class RelatedSeriesSuggestion
 
     /// <summary>The unowned related series' preferred display title.</summary>
     public string RelatedTitle { get; set; } = string.Empty;
+
+    /// <summary>The unowned related series' AniDB type (e.g. "Movie", "TV", "OVA"). Used to route movie-type suggestions to Radarr instead of Sonarr.</summary>
+    public string RelatedType { get; set; } = string.Empty;
 }

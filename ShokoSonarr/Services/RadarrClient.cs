@@ -12,7 +12,10 @@ public class RadarrClient(HttpClient httpClient)
 
     private HttpRequestMessage BuildRequest(HttpMethod method, RadarrSettings settings, string path)
     {
-        var request = new HttpRequestMessage(method, $"{settings.BaseUrl!.TrimEnd('/')}{path}");
+        // A null/blank BaseUrl (e.g. Radarr never configured) produces a relative URI here rather than
+        // throwing — HttpClient.SendAsync then fails with a catchable InvalidOperationException instead
+        // of crashing the request outside SendAsync's try/catch.
+        var request = new HttpRequestMessage(method, $"{settings.BaseUrl?.TrimEnd('/') ?? string.Empty}{path}");
         request.Headers.Add("X-Api-Key", settings.ApiKey);
         return request;
     }
