@@ -348,6 +348,16 @@ document.getElementById('scan-now').onclick = async () => {
   renderSeries(result);
 };
 
+document.getElementById('sync-tags').onclick = async () => {
+  const result = await fetchJson('/Sonarr/sync-tags', { method: 'POST' });
+  if (!result.Success) {
+    alert(`Failed: ${result.Message}`);
+    return;
+  }
+  const { Updated, SkippedNoMatch, Failed } = result.Data;
+  alert(`Tagged ${Updated}, skipped ${SkippedNoMatch} with no Sonarr match, ${Failed} failed.`);
+};
+
 document.getElementById('open-settings').onclick = () => {
   document.getElementById('settings-panel').classList.toggle('hidden');
 };
