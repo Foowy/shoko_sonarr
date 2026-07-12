@@ -1,5 +1,7 @@
+using System.Linq;
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using ShokoSonarr.Config;
 using ShokoSonarr.Models;
@@ -24,6 +26,9 @@ public record SonarrRootFolderResource(
 
 /// <summary>Minimal Sonarr series resource, used only to detect whether a series already exists.</summary>
 public record SonarrSeriesResource([property: JsonPropertyName("id")] int Id);
+
+/// <summary>Sonarr tag resource, as returned by Sonarr's v3 API.</summary>
+public record SonarrTagResource([property: JsonPropertyName("id")] int Id, [property: JsonPropertyName("label")] string Label);
 
 /// <summary>Typed HTTP client for Sonarr's v3 API. Never throws on HTTP/connectivity failure — all calls return a typed result.</summary>
 public class SonarrClient(HttpClient httpClient)
@@ -70,7 +75,7 @@ public class SonarrClient(HttpClient httpClient)
         SendAsync<List<SonarrSeriesLookupResult>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/series/lookup?term={Uri.EscapeDataString(title)}"), ct);
 
     /// <summary>Adds a series to Sonarr. Defaults to monitoring disabled and no immediate search — the owned-series flow explicitly monitors and searches only specific missing episodes afterward. Pass monitorMode "all" and searchOnAdd true for the discovery flow (adding a wholly unowned series), which has no per-episode missing data to act on selectively.</summary>
-    public async Task<SonarrActionResult<int>> AddSeriesAsync(SonarrSettings settings, int tvdbId, string title, int qualityProfileId, string rootFolderPath, string monitorMode = "none", bool searchOnAdd = false, CancellationToken ct = default)
+    public async Task<SonarrActionResult<int>> AddSeriesAsync(SonarrSettings settings, int tvdbId, string title, int qualityProfileId, string rootFolderPath, string monitorMode = "none", bool searchOnAdd = false, List<int>? tagIds = null, CancellationToken ct = default)
     {
         var request = BuildRequest(HttpMethod.Post, settings, "/api/v3/series");
         request.Content = JsonContent.Create(new
@@ -80,6 +85,7 @@ public class SonarrClient(HttpClient httpClient)
             qualityProfileId,
             rootFolderPath,
             monitored = true,
+            tags = tagIds ?? [],
             addOptions = new { monitor = monitorMode, searchForMissingEpisodes = searchOnAdd },
         }, options: s_jsonOptions);
 
@@ -103,6 +109,51 @@ public class SonarrClient(HttpClient httpClient)
     /// <summary>Looks up a series already added to Sonarr by TVDB ID (as opposed to <see cref="LookupByTvdbIdAsync"/>, which searches TheTVDB regardless of whether it's already added).</summary>
     public Task<SonarrActionResult<List<SonarrSeriesResource>>> GetExistingSeriesByTvdbIdAsync(SonarrSettings settings, int tvdbId, CancellationToken ct = default) =>
         SendAsync<List<SonarrSeriesResource>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/series?tvdbId={tvdbId}"), ct);
+
+    /// <summary>Gets all of Sonarr's configured tags.</summary>
+    public Task<SonarrActionResult<List<SonarrTagResource>>> GetTagsAsync(SonarrSettings settings, CancellationToken ct = default) =>
+        SendAsync<List<SonarrTagResource>>(BuildRequest(HttpMethod.Get, settings, "/api/v3/tag"), ct);
+
+    /// <summary>Creates a new Sonarr tag with the given label.</summary>
+    public async Task<SonarrActionResult<SonarrTagResource>> CreateTagAsync(SonarrSettings settings, string label, CancellationToken ct = default)
+    {
+        var request = BuildRequest(HttpMethod.Post, settings, "/api/v3/tag");
+        request.Content = JsonContent.Create(new { label }, options: s_jsonOptions);
+        return await SendAsync<SonarrTagResource>(request, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Finds an existing tag matching the label (case-insensitive), or creates one if none exists.</summary>
+    public async Task<SonarrActionResult<int>> EnsureTagIdAsync(SonarrSettings settings, string label, CancellationToken ct = default)
+    {
+        var existing = await GetTagsAsync(settings, ct).ConfigureAwait(false);
+        if (!existing.Success)
+            return SonarrActionResult<int>.Fail(existing.ErrorMessage!);
+
+        var match = existing.Data!.FirstOrDefault(t => string.Equals(t.Label, label, StringComparison.OrdinalIgnoreCase));
+        if (match is not null)
+            return SonarrActionResult<int>.Ok(match.Id);
+
+        var created = await CreateTagAsync(settings, label, ct).ConfigureAwait(false);
+        return created.Success ? SonarrActionResult<int>.Ok(created.Data!.Id) : SonarrActionResult<int>.Fail(created.ErrorMessage!);
+    }
+
+    /// <summary>Adds a tag to an existing Sonarr series if not already present. Sonarr requires a full-resource PUT for updates, so this fetches the series as a mutable JSON node, adds the tag ID into its "tags" array if missing, and PUTs the whole node back unchanged otherwise.</summary>
+    public async Task<SonarrActionResult<bool>> UpdateSeriesTagAsync(SonarrSettings settings, int sonarrSeriesId, int tagId, CancellationToken ct = default)
+    {
+        var getResult = await SendAsync<JsonNode>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/series/{sonarrSeriesId}"), ct).ConfigureAwait(false);
+        if (!getResult.Success)
+            return SonarrActionResult<bool>.Fail(getResult.ErrorMessage!);
+
+        var series = getResult.Data!;
+        var tags = series["tags"]?.AsArray() ?? [];
+        if (!tags.Any(t => t!.GetValue<int>() == tagId))
+            tags.Add(tagId);
+        series["tags"] = tags;
+
+        var putRequest = BuildRequest(HttpMethod.Put, settings, $"/api/v3/series/{sonarrSeriesId}");
+        putRequest.Content = JsonContent.Create(series, options: s_jsonOptions);
+        return await SendAsync<bool>(putRequest, ct).ConfigureAwait(false);
+    }
 
     /// <summary>Gets all episodes for a Sonarr series (used to map AniDB episode numbers to Sonarr episode IDs).</summary>
     public Task<SonarrActionResult<List<SonarrEpisodeResource>>> GetEpisodesAsync(SonarrSettings settings, int sonarrSeriesId, CancellationToken ct = default) =>
