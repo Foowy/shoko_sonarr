@@ -69,8 +69,8 @@ public class SonarrClient(HttpClient httpClient)
     public Task<SonarrActionResult<List<SonarrSeriesLookupResult>>> LookupByTitleAsync(SonarrSettings settings, string title, CancellationToken ct = default) =>
         SendAsync<List<SonarrSeriesLookupResult>>(BuildRequest(HttpMethod.Get, settings, $"/api/v3/series/lookup?term={Uri.EscapeDataString(title)}"), ct);
 
-    /// <summary>Adds a series to Sonarr with monitoring disabled by default, so only explicitly-monitored missing episodes get searched.</summary>
-    public async Task<SonarrActionResult<int>> AddSeriesAsync(SonarrSettings settings, int tvdbId, string title, int qualityProfileId, string rootFolderPath, CancellationToken ct = default)
+    /// <summary>Adds a series to Sonarr. Defaults to monitoring disabled and no immediate search — the owned-series flow explicitly monitors and searches only specific missing episodes afterward. Pass monitorMode "all" and searchOnAdd true for the discovery flow (adding a wholly unowned series), which has no per-episode missing data to act on selectively.</summary>
+    public async Task<SonarrActionResult<int>> AddSeriesAsync(SonarrSettings settings, int tvdbId, string title, int qualityProfileId, string rootFolderPath, string monitorMode = "none", bool searchOnAdd = false, CancellationToken ct = default)
     {
         var request = BuildRequest(HttpMethod.Post, settings, "/api/v3/series");
         request.Content = JsonContent.Create(new
@@ -80,7 +80,7 @@ public class SonarrClient(HttpClient httpClient)
             qualityProfileId,
             rootFolderPath,
             monitored = true,
-            addOptions = new { monitor = "none", searchForMissingEpisodes = false },
+            addOptions = new { monitor = monitorMode, searchForMissingEpisodes = searchOnAdd },
         }, options: s_jsonOptions);
 
         var result = await SendAsync<JsonElement>(request, ct).ConfigureAwait(false);

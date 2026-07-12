@@ -86,6 +86,24 @@ public class SonarrClientTests
     }
 
     [Fact]
+    public async Task AddSeriesAsync_WithDiscoveryMode_SendsMonitorAllAndSearchTrue()
+    {
+        var handler = new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.Created)
+        {
+            Content = new StringContent("""{"id":56}"""),
+        });
+        var client = new SonarrClient(new HttpClient(handler));
+
+        var result = await client.AddSeriesAsync(TestSettings, tvdbId: 81798, title: "Some Sequel", qualityProfileId: 4, rootFolderPath: "/anime", monitorMode: "all", searchOnAdd: true);
+
+        Assert.True(result.Success);
+        Assert.Equal(56, result.Data);
+        using var body = JsonDocument.Parse(handler.LastRequestBody!);
+        Assert.Equal("all", body.RootElement.GetProperty("addOptions").GetProperty("monitor").GetString());
+        Assert.True(body.RootElement.GetProperty("addOptions").GetProperty("searchForMissingEpisodes").GetBoolean());
+    }
+
+    [Fact]
     public async Task AddSeriesAsync_WhenIdMissingFromResponse_ReturnsFailureNotException()
     {
         var handler = new FakeHandler(_ => new HttpResponseMessage(HttpStatusCode.Created) { Content = new StringContent("{}") });
