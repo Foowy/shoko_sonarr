@@ -265,6 +265,8 @@ async function loadSettings() {
     const profileResult = await fetchJson('/Settings/quality-profile');
     if (profileResult.Success)
       populateSelect('settings-quality-profile', [profileResult.Data], 'Id', 'Name', savedQualityProfileId);
+    else
+      setStatus(`Showing profile #${savedQualityProfileId} — couldn't resolve its name: ${profileResult.Message}`, false);
   }
 }
 
