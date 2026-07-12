@@ -11,6 +11,7 @@ namespace ShokoSonarr.Services;
 public class ScanCacheStore : IDisposable
 {
     private const string SettingsCollectionName = "settings";
+    private const string RadarrSettingsCollectionName = "radarrSettings";
     private const string ScanCollectionName = "scans";
     private const string SeriesOverridesCollectionName = "seriesOverrides";
     private const string PendingSearchesCollectionName = "pendingSearches";
@@ -48,6 +49,21 @@ public class ScanCacheStore : IDisposable
     {
         var col = _db.GetCollection<SettingsDocument>(SettingsCollectionName);
         col.Upsert(new SettingsDocument { Id = SettingsDocumentId, Settings = settings });
+    }
+
+    /// <summary>Gets the current Radarr settings, or defaults if none have been saved.</summary>
+    public RadarrSettings GetRadarrSettings()
+    {
+        var col = _db.GetCollection<RadarrSettingsDocument>(RadarrSettingsCollectionName);
+        var doc = col.FindById(SettingsDocumentId);
+        return doc?.Settings ?? new RadarrSettings();
+    }
+
+    /// <summary>Persists Radarr settings, replacing any previously saved settings.</summary>
+    public void SaveRadarrSettings(RadarrSettings settings)
+    {
+        var col = _db.GetCollection<RadarrSettingsDocument>(RadarrSettingsCollectionName);
+        col.Upsert(new RadarrSettingsDocument { Id = SettingsDocumentId, Settings = settings });
     }
 
     /// <summary>Sets (or clears, when <paramref name="includeSpecials"/> is null) the specials override for a series, preserving any Sonarr quality-profile/root-folder override already set.</summary>
@@ -142,6 +158,12 @@ public class ScanCacheStore : IDisposable
     {
         public int Id { get; set; }
         public SonarrSettings Settings { get; set; } = new();
+    }
+
+    private class RadarrSettingsDocument
+    {
+        public int Id { get; set; }
+        public RadarrSettings Settings { get; set; } = new();
     }
 
     private class ScanDocument

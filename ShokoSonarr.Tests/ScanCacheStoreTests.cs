@@ -46,6 +46,28 @@ public class ScanCacheStoreTests : IDisposable
     }
 
     [Fact]
+    public void SaveRadarrSettings_ThenGetRadarrSettings_RoundTrips()
+    {
+        _store.SaveRadarrSettings(new RadarrSettings { BaseUrl = "http://radarr:7878", ApiKey = "xyz789", QualityProfileId = 3, RootFolderPath = "/movies" });
+
+        var settings = _store.GetRadarrSettings();
+
+        Assert.Equal("http://radarr:7878", settings.BaseUrl);
+        Assert.Equal("xyz789", settings.ApiKey);
+        Assert.Equal(3, settings.QualityProfileId);
+        Assert.Equal("/movies", settings.RootFolderPath);
+    }
+
+    [Fact]
+    public void GetRadarrSettings_WhenNoneSaved_ReturnsDefaults()
+    {
+        var settings = _store.GetRadarrSettings();
+
+        Assert.Null(settings.BaseUrl);
+        Assert.Null(settings.QualityProfileId);
+    }
+
+    [Fact]
     public void SaveSettings_ThenGetSettings_RoundTripsIncludeSpecials()
     {
         _store.SaveSettings(new SonarrSettings { IncludeSpecials = false });
