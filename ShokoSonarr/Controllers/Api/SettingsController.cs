@@ -63,6 +63,15 @@ public class SettingsController(ScanCacheStore cacheStore, SonarrClient sonarrCl
         return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: null));
     }
 
+    /// <summary>Pings Sonarr using the currently stored settings, for the dashboard's persistent header indicator.</summary>
+    /// <returns>200 with success=true if reachable, success=false with an error message otherwise.</returns>
+    [HttpGet("health")]
+    public async Task<IActionResult> GetHealth()
+    {
+        var result = await sonarrClient.TestConnectionAsync(cacheStore.GetSettings());
+        return Ok(new ApiResponse<object>(Success: result.Success, Message: result.ErrorMessage, Data: null));
+    }
+
     /// <summary>Resolves the saved quality profile's display name from Sonarr, so the dashboard can show it instead of a bare ID before the user re-tests the connection.</summary>
     /// <returns>200 with the profile's {id, name}, or success=false if no profile is saved or Sonarr couldn't be reached.</returns>
     [HttpGet("quality-profile")]

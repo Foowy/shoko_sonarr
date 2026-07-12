@@ -111,6 +111,13 @@ header h1::before {
 
 .actions { display: flex; gap: 0.5rem; align-items: center; }
 
+.title-group { display: flex; align-items: center; gap: 0.75rem; }
+
+.health-indicator { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--ink-dim); }
+.health-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--ink-dim); flex-shrink: 0; }
+.health-indicator.ok .health-dot { background: var(--teal); }
+.health-indicator.err .health-dot { background: var(--red); }
+
 .live-refresh {
   display: flex;
   align-items: center;

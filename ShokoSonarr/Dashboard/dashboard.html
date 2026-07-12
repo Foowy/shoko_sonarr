@@ -7,7 +7,12 @@
 </head>
 <body>
   <header>
-    <h1>Missing Episodes</h1>
+    <div class="title-group">
+      <h1>Missing Episodes</h1>
+      <span id="connection-health" class="health-indicator" title="Sonarr connection status">
+        <span class="health-dot"></span><span class="health-label">Checking…</span>
+      </span>
+    </div>
     <div class="actions">
       <button id="scan-now" class="primary">Scan Now</button>
       <label class="live-refresh"><input id="live-refresh" type="checkbox" /> Live Refresh</label>

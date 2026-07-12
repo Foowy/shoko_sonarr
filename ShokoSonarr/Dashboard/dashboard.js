@@ -187,6 +187,25 @@ function setLiveRefresh(enabled) {
 
 document.getElementById('live-refresh').onchange = (e) => setLiveRefresh(e.target.checked);
 
+const HEALTH_CHECK_INTERVAL_MS = 60_000;
+
+async function checkConnectionHealth() {
+  const el = document.getElementById('connection-health');
+  const label = el.querySelector('.health-label');
+  const result = await fetchJson('/Settings/health');
+  el.classList.remove('ok', 'err');
+  if (result.Success) {
+    el.classList.add('ok');
+    label.textContent = 'Sonarr Connected';
+  } else {
+    el.classList.add('err');
+    label.textContent = 'Sonarr Unreachable';
+  }
+}
+
+checkConnectionHealth();
+setInterval(() => { if (!document.hidden) checkConnectionHealth(); }, HEALTH_CHECK_INTERVAL_MS);
+
 let savedQualityProfileId = null;
 let savedRootFolderPath = null;
 
