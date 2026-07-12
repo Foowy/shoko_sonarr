@@ -60,6 +60,10 @@
 
 * { box-sizing: border-box; }
 
+html, body {
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--sans);
   margin: 0;
@@ -83,6 +87,7 @@ button, input, select {
 
 header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.5rem;
@@ -109,7 +114,7 @@ header h1::before {
   margin-right: 0.6em;
 }
 
-.actions { display: flex; gap: 0.5rem; align-items: center; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 
 .title-group { display: flex; align-items: center; gap: 0.75rem; }
 
