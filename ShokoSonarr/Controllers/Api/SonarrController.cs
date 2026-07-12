@@ -120,7 +120,10 @@ public class SonarrController(SeriesMatcher matcher, SonarrClient sonarrClient, 
             return NotFound(new ApiResponse<object>(Success: false, Message: "Series not found in the last scan.", Data: null));
 
         var settings = cacheStore.GetSettings();
-        if (settings.QualityProfileId is null || string.IsNullOrEmpty(settings.RootFolderPath))
+        var seriesOverride = cacheStore.GetSeriesOverride(request.ShokoSeriesId);
+        var qualityProfileId = seriesOverride?.QualityProfileId ?? settings.QualityProfileId;
+        var rootFolderPath = seriesOverride?.RootFolderPath ?? settings.RootFolderPath;
+        if (qualityProfileId is null || string.IsNullOrEmpty(rootFolderPath))
             return BadRequest(new ApiResponse<object>(Success: false, Message: "Quality profile and root folder must be configured in Settings before adding a series.", Data: null));
 
         // A series matched by TVDB ID may already exist in the user's Sonarr instance (lookup returns
@@ -138,7 +141,7 @@ public class SonarrController(SeriesMatcher matcher, SonarrClient sonarrClient, 
                 tagIds = [tag.Data];
         }
 
-        var added = await sonarrClient.AddSeriesAsync(settings, request.TvdbId, series.Title, settings.QualityProfileId.Value, settings.RootFolderPath!, tagIds: tagIds);
+        var added = await sonarrClient.AddSeriesAsync(settings, request.TvdbId, series.Title, qualityProfileId.Value, rootFolderPath!, tagIds: tagIds);
         if (!added.Success)
             return Conflict(new ApiResponse<object>(Success: false, Message: added.ErrorMessage, Data: null));
 
