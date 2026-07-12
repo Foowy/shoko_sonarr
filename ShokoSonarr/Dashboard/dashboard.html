@@ -39,6 +39,19 @@
     </div>
 
     <div class="settings-section">
+      <h2>Radarr Connection</h2>
+      <div class="settings-grid">
+        <label>Base URL <input id="radarr-settings-url" type="text" placeholder="http://192.168.1.60:7878" /></label>
+        <label>API Key <input id="radarr-settings-key" type="password" /></label>
+        <label>Quality Profile <select id="radarr-settings-quality-profile"></select></label>
+        <label>Root Folder <select id="radarr-settings-root-folder"></select></label>
+      </div>
+      <div class="actions">
+        <button id="radarr-test-connection">Test Connection</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <h2>Plugin Settings</h2>
       <div class="settings-grid">
         <label>Scan Interval (hours) <input id="settings-interval" type="number" min="0" /></label>

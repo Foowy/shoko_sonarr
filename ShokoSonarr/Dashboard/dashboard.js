@@ -344,6 +344,8 @@ setInterval(() => { if (!document.hidden) checkConnectionHealth(); }, HEALTH_CHE
 
 let savedQualityProfileId = null;
 let savedRootFolderPath = null;
+let savedRadarrQualityProfileId = null;
+let savedRadarrRootFolderPath = null;
 
 function currentSettingsForm() {
   return {
@@ -379,6 +381,16 @@ async function loadSonarrOptions(settings) {
   populateSelect('settings-root-folder', result.Data.rootFolders, 'Path', 'Path', savedRootFolderPath);
 }
 
+async function loadRadarrOptions(settings) {
+  const result = await fetchJson('/RadarrSettings/radarr-options', { method: 'POST', body: JSON.stringify(settings) });
+  if (!result.Success) {
+    setStatus(`Failed to load Radarr options: ${result.Message}`, false);
+    return;
+  }
+  populateSelect('radarr-settings-quality-profile', result.Data.qualityProfiles, 'Id', 'Name', savedRadarrQualityProfileId);
+  populateSelect('radarr-settings-root-folder', result.Data.rootFolders, 'Path', 'Path', savedRadarrRootFolderPath);
+}
+
 async function loadSettings() {
   const result = await fetchJson('/Settings');
   document.getElementById('settings-url').value = result.Data.BaseUrl || '';
@@ -404,6 +416,14 @@ async function loadSettings() {
     else
       setStatus(`Showing profile #${savedQualityProfileId} — couldn't resolve its name: ${profileResult.Message}`, false);
   }
+
+  const radarrResult = await fetchJson('/RadarrSettings');
+  document.getElementById('radarr-settings-url').value = radarrResult.Data.BaseUrl || '';
+  document.getElementById('radarr-settings-key').placeholder = radarrResult.Data.ApiKey ? 'Key saved (leave blank to keep)' : '';
+  savedRadarrQualityProfileId = radarrResult.Data.QualityProfileId;
+  savedRadarrRootFolderPath = radarrResult.Data.RootFolderPath;
+  populateSelect('radarr-settings-quality-profile', savedRadarrQualityProfileId ? [{ Id: savedRadarrQualityProfileId, Name: `#${savedRadarrQualityProfileId}` }] : [], 'Id', 'Name', savedRadarrQualityProfileId);
+  populateSelect('radarr-settings-root-folder', savedRadarrRootFolderPath ? [{ Path: savedRadarrRootFolderPath }] : [], 'Path', 'Path', savedRadarrRootFolderPath);
 }
 
 document.getElementById('scan-now').onclick = async () => {
@@ -614,6 +634,17 @@ document.getElementById('test-connection').onclick = async () => {
     await loadSonarrOptions(settings);
 };
 
+document.getElementById('radarr-test-connection').onclick = async () => {
+  const settings = {
+    baseUrl: document.getElementById('radarr-settings-url').value,
+    apiKey: document.getElementById('radarr-settings-key').value,
+  };
+  const result = await fetchJson('/RadarrSettings/test-connection', { method: 'POST', body: JSON.stringify(settings) });
+  setStatus(result.Success ? 'Radarr connected.' : `Radarr failed: ${result.Message}`, result.Success);
+  if (result.Success)
+    await loadRadarrOptions(settings);
+};
+
 document.getElementById('save-settings').onclick = async () => {
   const settings = {
     ...currentSettingsForm(),
@@ -621,6 +652,16 @@ document.getElementById('save-settings').onclick = async () => {
     rootFolderPath: document.getElementById('settings-root-folder').value || null,
   };
   await fetchJson('/Settings', { method: 'PUT', body: JSON.stringify(settings) });
+
+  const radarrSettings = {
+    baseUrl: document.getElementById('radarr-settings-url').value,
+    apiKey: document.getElementById('radarr-settings-key').value,
+    qualityProfileId: Number(document.getElementById('radarr-settings-quality-profile').value) || null,
+    rootFolderPath: document.getElementById('radarr-settings-root-folder').value || null,
+  };
+  await fetchJson('/RadarrSettings', { method: 'PUT', body: JSON.stringify(radarrSettings) });
+  document.getElementById('radarr-settings-key').value = '';
+
   setStatus('Saved.', true);
   document.getElementById('settings-key').value = '';
   document.getElementById('settings-webhook').value = '';
