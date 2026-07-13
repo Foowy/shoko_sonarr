@@ -14,6 +14,34 @@
   "image_url": "https://raw.githubusercontent.com/Foowy/ShokoSonarr/master/assets/master_shokosonarr.png",
   "releases": [
     {
+      "version": "0.4.1",
+      "tag": "v0.4.1",
+      "source_revision": "891ce4d18f49a38cdcae47100e4d31e7aac45e90",
+      "released_at": "2026-07-13T08:02:39Z",
+      "channel": "Stable",
+      "release_notes": "## What's Changed\n* refactor: extract shared BuildRequest/SendAsync into ArrClientBase by @Foowy in https://github.com/Foowy/ShokoSonarr/pull/8\n* chore: bump version to 0.4.1, fix stale RepositoryUrl and Version constant by @Foowy in https://github.com/Foowy/ShokoSonarr/pull/9\n\n## New Contributors\n* @Foowy made their first contribution in https://github.com/Foowy/ShokoSonarr/pull/8\n\n**Full Changelog**: https://github.com/Foowy/ShokoSonarr/compare/v0.4.0...v0.4.1",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoSonarr/releases/download/v0.4.1/ShokoSonarr-v0.4.1_linux-arm64.zip",
+          "checksum": "627b1937230a1c71b25ea92dccec41c2cda11c6834cea2ca6be7f1fe35d913ac"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoSonarr/releases/download/v0.4.1/ShokoSonarr-v0.4.1_linux-x64.zip",
+          "checksum": "21b06ed000e3c6d6b20e197f47d837421635c3397da06f657958bd6024e0802b"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoSonarr/releases/download/v0.4.1/ShokoSonarr-v0.4.1_win-x64.zip",
+          "checksum": "bbaeb5c1522c9913b22135611fbf9be86da38006b6ff0310ddefa4032571657e"
+        }
+      ]
+    },
+    {
       "version": "0.4.0",
       "tag": "v0.4.0",
       "source_revision": "c1ed10df5d90639f9009d323ed2bc9385ba30315",
