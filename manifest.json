@@ -14,6 +14,34 @@
   "image_url": "https://raw.githubusercontent.com/Foowy/ShokoSonarr/master/assets/master_shokosonarr.png",
   "releases": [
     {
+      "version": "0.4.2",
+      "tag": "v0.4.2",
+      "source_revision": "89917d8ffeddef64eb09f6f37ca9d47af686eea8",
+      "released_at": "2026-07-13T08:49:14Z",
+      "channel": "Stable",
+      "release_notes": "## What's Changed\n* ci: backfill manifest entry for v0.4.1 by @Foowy in https://github.com/Foowy/ShokoSonarr/pull/10\n* ci: use RELEASE_PAT for manifest push to master by @Foowy in https://github.com/Foowy/ShokoSonarr/pull/11\n* test: add SonarrController coverage by @Foowy in https://github.com/Foowy/ShokoSonarr/pull/12\n* design: add fluid motion and depth to the dashboard by @Foowy in https://github.com/Foowy/ShokoSonarr/pull/13\n* chore: bump version to 0.4.2 by @Foowy in https://github.com/Foowy/ShokoSonarr/pull/14\n\n\n**Full Changelog**: https://github.com/Foowy/ShokoSonarr/compare/v0.4.1...v0.4.2",
+      "archives": [
+        {
+          "runtime": "linux-arm64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoSonarr/releases/download/v0.4.2/ShokoSonarr-v0.4.2_linux-arm64.zip",
+          "checksum": "63fbbf57ffe1a19823c3892c4f4efe1af54f665e53c5637f9dd24211b6542952"
+        },
+        {
+          "runtime": "linux-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoSonarr/releases/download/v0.4.2/ShokoSonarr-v0.4.2_linux-x64.zip",
+          "checksum": "43dc9fcad1683d665b79700bd2a346a4a0008d0fe62d1aaf7cb6e13e491c918f"
+        },
+        {
+          "runtime": "win-x64",
+          "abstraction": "6.0.0",
+          "url": "https://github.com/Foowy/ShokoSonarr/releases/download/v0.4.2/ShokoSonarr-v0.4.2_win-x64.zip",
+          "checksum": "4e3bf7e449ab7b85c18827e42ffd05b39103ef4ad000787dd37e372498279f18"
+        }
+      ]
+    },
+    {
       "version": "0.4.1",
       "tag": "v0.4.1",
       "source_revision": "891ce4d18f49a38cdcae47100e4d31e7aac45e90",
