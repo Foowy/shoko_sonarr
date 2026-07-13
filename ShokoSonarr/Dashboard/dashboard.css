@@ -93,6 +93,7 @@ header {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--rule);
   background: var(--bg-raised);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -119,9 +120,25 @@ header h1::before {
 .title-group { display: flex; align-items: center; gap: 0.75rem; }
 
 .health-indicator { display: flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; color: var(--ink-dim); }
-.health-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--ink-dim); flex-shrink: 0; }
-.health-indicator.ok .health-dot { background: var(--teal); }
-.health-indicator.err .health-dot { background: var(--red); }
+.health-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--ink-dim);
+  flex-shrink: 0;
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+.health-indicator.ok .health-dot,
+.health-indicator.err .health-dot {
+  animation: none;
+}
+.health-indicator.ok .health-dot { background: var(--teal); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--teal) 55%, transparent); }
+.health-indicator.err .health-dot { background: var(--red); box-shadow: 0 0 6px 1px color-mix(in srgb, var(--red) 55%, transparent); }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1); }
+}
 
 .live-refresh {
   display: flex;
@@ -145,10 +162,11 @@ button {
   font-size: 0.75rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease, transform 100ms ease;
 }
 
-button:hover { border-color: var(--amber-dim); color: var(--ink); }
+button:hover { border-color: var(--amber-dim); color: var(--ink); background: var(--bg-inset); }
+button:active { transform: scale(0.96); }
 
 button.primary {
   border-color: var(--amber-dim);
@@ -160,8 +178,14 @@ button.primary:hover { background: var(--amber-dim); color: var(--ink); }
   background: var(--bg-raised);
   border-bottom: 1px solid var(--rule);
   padding: 1.25rem 1.5rem;
+  animation: panel-reveal 220ms ease;
 }
 .panel.hidden { display: none; }
+
+@keyframes panel-reveal {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 .panel h2 {
   font-family: var(--mono);
@@ -228,8 +252,15 @@ button.primary:hover { background: var(--amber-dim); color: var(--ink); }
   background: var(--bg-raised);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: bulk-bar-reveal 200ms ease;
 }
 #bulk-actions-bar.hidden { display: none; }
+
+@keyframes bulk-bar-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 #bulk-selected-count { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-dim); margin-right: 0.4rem; }
 
 .bulk-select { margin-right: 0.5rem; }
@@ -244,8 +275,20 @@ button.primary:hover { background: var(--amber-dim); color: var(--ink); }
   display: flex;
   align-items: center;
   gap: 0.9rem;
-  padding: 0.65rem 0;
+  padding: 0.65rem 0.75rem;
+  margin: 0 -0.75rem;
+  border-left: 2px solid transparent;
   cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.series-row .header:hover {
+  background: var(--bg-inset);
+  border-left-color: var(--amber-dim);
+}
+
+.series-row.expanded .header {
+  border-left-color: var(--amber);
 }
 
 .series-row .chevron {
@@ -300,10 +343,19 @@ button.primary:hover { background: var(--amber-dim); color: var(--ink); }
 .series-row.no-match .count { color: var(--ink-faint); }
 
 .episodes {
-  display: none;
-  padding: 0 0 0.75rem 1.9rem;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0 0 0 1.9rem;
+  transition: max-height 260ms ease, opacity 200ms ease, padding-bottom 260ms ease;
 }
-.series-row.expanded .episodes { display: block; }
+.series-row.expanded .episodes {
+  /* Generous enough to never clip even long-running series' full missing-episode lists —
+     a smaller cap would silently truncate content instead of just animating less smoothly. */
+  max-height: 8000px;
+  opacity: 1;
+  padding-bottom: 0.75rem;
+}
 
 .episode-row {
   display: flex;
@@ -325,8 +377,18 @@ button.primary:hover { background: var(--amber-dim); color: var(--ink); }
 }
 .episode-row .status.search-triggered { color: var(--teal); }
 
-.row-actions { display: none; padding: 0 0 0.75rem 1.9rem; }
-.series-row.expanded .row-actions { display: block; }
+.row-actions {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  padding: 0 0 0 1.9rem;
+  transition: max-height 260ms ease 40ms, opacity 200ms ease 40ms, padding-bottom 260ms ease 40ms;
+}
+.series-row.expanded .row-actions {
+  max-height: 400px;
+  opacity: 1;
+  padding-bottom: 0.75rem;
+}
 .row-actions .no-match-label {
   font-family: var(--mono);
   font-size: 0.72rem;
@@ -406,5 +468,5 @@ button.primary:hover { background: var(--amber-dim); color: var(--ink); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { transition: none !important; }
+  * { transition: none !important; animation: none !important; }
 }
