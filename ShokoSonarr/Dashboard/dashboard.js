@@ -125,7 +125,20 @@ function renderSeries(snapshot) {
       const epRow = document.createElement('div');
       epRow.className = 'episode-row';
       const code = ep.IsSpecial ? `S${ep.EpisodeNumber}` : `E${ep.EpisodeNumber}`;
-      epRow.innerHTML = `<span><span class="ep-code">${code}</span><span class="ep-title">${ep.Title || '(untitled)'}</span></span><span class="status ${ep.ActionStatus}">${ep.ActionStatus}</span>`;
+      const epLabel = document.createElement('span');
+      const epCodeSpan = document.createElement('span');
+      epCodeSpan.className = 'ep-code';
+      epCodeSpan.textContent = code;
+      const epTitleSpan = document.createElement('span');
+      epTitleSpan.className = 'ep-title';
+      epTitleSpan.textContent = ep.Title || '(untitled)';
+      epLabel.appendChild(epCodeSpan);
+      epLabel.appendChild(epTitleSpan);
+      const epStatus = document.createElement('span');
+      epStatus.className = `status ${ep.ActionStatus}`;
+      epStatus.textContent = ep.ActionStatus;
+      epRow.appendChild(epLabel);
+      epRow.appendChild(epStatus);
       episodesDiv.appendChild(epRow);
     }
     row.appendChild(episodesDiv);
@@ -537,7 +550,18 @@ function renderSuggestions(suggestions) {
     row.className = 'suggestion-row';
 
     const text = document.createElement('div');
-    text.innerHTML = `Because you have <strong>${s.OwningSeriesTitle}</strong>, you're missing its <strong>${s.RelationType}</strong>: <em>${s.RelatedTitle}</em>`;
+    text.appendChild(document.createTextNode('Because you have '));
+    const owningStrong = document.createElement('strong');
+    owningStrong.textContent = s.OwningSeriesTitle;
+    text.appendChild(owningStrong);
+    text.appendChild(document.createTextNode(", you're missing its "));
+    const relationStrong = document.createElement('strong');
+    relationStrong.textContent = s.RelationType;
+    text.appendChild(relationStrong);
+    text.appendChild(document.createTextNode(': '));
+    const relatedEm = document.createElement('em');
+    relatedEm.textContent = s.RelatedTitle;
+    text.appendChild(relatedEm);
     row.appendChild(text);
 
     const addBtn = document.createElement('button');
