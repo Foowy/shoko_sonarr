@@ -1,12 +1,10 @@
 using Asp.Versioning;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ShokoSonarr.Controllers;
 
 /// <summary>Shared route/versioning setup and response envelope for all ShokoSonarr API controllers.</summary>
 [ApiController]
-[Authorize]
 [ApiVersion(ShokoSonarrConstants.ApiVersion)]
 [Route("/api/v{version:apiVersion}/ShokoSonarr/[controller]")]
 public abstract class ShokoSonarrBaseController : ControllerBase
